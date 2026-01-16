@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDINET 大量保有報告書モニター</title>
+  <meta name="description" content="大量保有報告書をリアルタイムで監視">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="app">
+    <!-- ヘッダー -->
+    <header class="header">
+      <div class="header-content">
+        <h1 class="logo">
+          <span class="logo-icon">📊</span>
+          EDINET モニター
+        </h1>
+        <div class="header-actions">
+          <button id="refreshBtn" class="btn btn-primary">
+            <span class="btn-icon">🔄</span>
+            更新
+          </button>
+          <button id="notifyBtn" class="btn btn-secondary">
+            <span class="btn-icon">🔔</span>
+            通知設定
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main">
+      <!-- ステータスカード -->
+      <section class="stats-section">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">📄</div>
+            <div class="stat-content">
+              <div class="stat-value" id="todayCount">--</div>
+              <div class="stat-label">本日の報告書</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-content">
+              <div class="stat-value" id="lastUpdated">--:--</div>
+              <div class="stat-label">最終更新</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">👁️</div>
+            <div class="stat-content">
+              <div class="stat-value" id="watchlistCount">--</div>
+              <div class="stat-label">監視対象</div>
+            </div>
+          </div>
+          <div class="stat-card status-card">
+            <div class="stat-icon">🟢</div>
+            <div class="stat-content">
+              <div class="stat-value" id="schedulerStatus">稼働中</div>
+              <div class="stat-label">自動監視</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- フィルター -->
+      <section class="filter-section">
+        <div class="filter-bar">
+          <div class="filter-group">
+            <input type="date" id="dateFilterStart" class="filter-input" placeholder="開始日">
+            <span style="color: var(--color-text-muted); padding: 0 0.5rem;">〜</span>
+            <input type="date" id="dateFilterEnd" class="filter-input" placeholder="終了日">
+            <input type="text" id="searchFilter" class="filter-input" placeholder="提出者名で検索...">
+          </div>
+          <div class="filter-group">
+            <select id="typeFilter" class="filter-select">
+              <option value="">全ての報告書</option>
+              <option value="大量保有報告書">大量保有報告書</option>
+              <option value="変更報告書">変更報告書</option>
+              <option value="訂正報告書">訂正報告書</option>
+            </select>
+            <button id="clearFiltersBtn" class="btn btn-secondary">
+              <span class="btn-icon">✕</span>
+              絞り込みをクリア
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 報告書一覧 -->
+      <section class="reports-section">
+        <div class="section-header">
+          <h2>大量保有報告書一覧</h2>
+          <span class="report-count" id="reportCount">0件</span>
+        </div>
+        <div class="reports-list" id="reportsList">
+          <div class="loading">読み込み中...</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 監視対象モーダル -->
+    <div class="modal" id="watchlistModal">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>監視対象設定</h2>
+          <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="watchlist-form">
+            <input type="text" id="watchlistInput" class="filter-input" placeholder="監視対象の名前を入力...">
+            <button id="addWatchlistBtn" class="btn btn-primary">追加</button>
+          </div>
+          <div class="watchlist-items" id="watchlistItems">
+            <!-- 監視対象がここに表示される -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+
+</html>
