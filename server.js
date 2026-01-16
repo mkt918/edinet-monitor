@@ -263,9 +263,9 @@ async function startServer() {
         }
         console.log('Watchlist presets initialized');
 
-        // 過去30日分のデータを取得（初回起動時）
-        console.log('Fetching historical data (past 30 days)...');
-        await fetchHistoricalData(30);
+        // 過去180日分のデータを取得（初回起動時）
+        console.log('Fetching historical data (past 180 days)...');
+        await fetchHistoricalData(180);
         console.log('Historical data loaded');
 
         // スケジューラー開始

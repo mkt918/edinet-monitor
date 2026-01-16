@@ -1,0 +1,51 @@
+/* ===== CSS Variables ===== */
+:root {
+    --color-bg: #0f0f1a;
+    --color-bg-light: #1a1a2e;
+    --color-bg-card: rgba(30, 30, 50, 0.8);
+    --color-border: rgba(255, 255, 255, 0.1);
+    --color-text: #e0e0e0;
+    --color-text-muted: #888;
+    --color-primary: #6c5ce7;
+    --color-primary-light: #a29bfe;
+    --color-secondary: #00cec9;
+    --color-accent: #fd79a8;
+    --color-success: #00b894;
+    --color-warning: #fdcb6e;
+    --color-danger: #e17055;
+
+    --font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Reset ===== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--color-bg);
+    color: var(--color-text);
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+}
+
+/* ===== App Layout ===== */
+.app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
