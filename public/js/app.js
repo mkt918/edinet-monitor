@@ -148,6 +148,7 @@ function renderReports() {
             <div class="report-filer-section">
               ${isWatched ? '<span class="watch-star">⭐</span>' : ''}
               <span class="report-filer">${escapeHtml(report.filer_name)}</span>
+              <a href="https://www.google.com/search?q=${encodeURIComponent(report.filer_name)}" target="_blank" class="btn-google-search" title="${escapeHtml(report.filer_name)}をGoogle検索" onclick="event.stopPropagation()">🔍</a>
               <span class="report-type ${typeClass}">${escapeHtml(report.report_type || '大量保有報告書')}</span>
             </div>
             <div class="report-meta-inline">

@@ -386,6 +386,33 @@ body {
   min-width: 0;
 }
 
+.btn-google-search {
+  text-decoration: none;
+  background: var(--color-bg-light);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.3rem;
+  /* 左マージン */
+  margin-right: 0.3rem;
+  /* 右マージン */
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.btn-google-search:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+  border-color: var(--color-primary);
+}
+
 .report-type {
   font-size: 0.7rem;
   padding: 0.15rem 0.5rem;
