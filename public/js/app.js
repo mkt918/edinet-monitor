@@ -321,7 +321,8 @@ function renderDetailsContent(details) {
 
     return `
         <div class="details-grid-custom">
-            <div class="details-row-1">
+            <!-- 1行目: 基本情報 -->
+            <div class="details-group-basic">
                 <div class="detail-item-inline">
                     <span class="detail-label">📈 対象銘柄</span>
                     <span class="detail-value">${escapeHtml(details.issuerName || '-')}</span>
@@ -333,6 +334,10 @@ function renderDetailsContent(details) {
                     <span class="detail-label">🏷️ 証券コード</span>
                     <span class="detail-value">${escapeHtml(details.securityCode || '-')}</span>
                 </div>
+            </div>
+            
+            <!-- 2行目: 数値情報 -->
+            <div class="details-group-metrics">
                 <div class="detail-item-inline">
                     <span class="detail-label">📊 保有割合</span>
                     <span class="detail-value ratio">${details.holdingRatioFormatted || '-'}</span>
@@ -346,8 +351,10 @@ function renderDetailsContent(details) {
                     <span class="detail-value change ${changeClass}">${details.holdingRatioChangeFormatted || '-'}</span>
                 </div>
             </div>
+
+            <!-- 3行目: 保有目的 -->
             ${details.purposeOfHolding ? `
-            <div class="details-row-2">
+            <div class="details-row-purpose">
                 <div class="detail-item-full">
                     <span class="detail-label">🎯 保有目的</span>
                     <span class="detail-value purpose">${escapeHtml(details.purposeOfHolding)}</span>

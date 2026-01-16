@@ -228,6 +228,15 @@ body {
   font-size: 0.9rem;
 }
 
+.details-group-basic,
+.details-group-metrics,
+.details-row-purpose {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .filter-group {
   display: flex;
   gap: 0.75rem;
@@ -788,8 +797,9 @@ body {
     gap: 0.75rem;
   }
 
-  /* 1行目: 銘柄コードなどを縦並びやラップ表示に */
-  .details-row-1 {
+  /* グループ内のアイテムを縦並びに */
+  .details-group-basic,
+  .details-group-metrics {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
@@ -806,8 +816,8 @@ body {
     border-bottom: none;
   }
 
-  /* 2行目: 保有目的 */
-  .details-row-2 {
+  /* 3行目: 保有目的 */
+  .details-row-purpose {
     width: 100%;
   }
 
