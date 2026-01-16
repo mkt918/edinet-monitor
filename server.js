@@ -286,9 +286,9 @@ async function startServer() {
 
         // Vercel環境では過去データ取得をスキップ（初回リクエスト時のタイムアウトを防ぐ）
         if (process.env.VERCEL !== '1') {
-            // 過去180日分のデータを取得（初回起動時）
-            console.log('Fetching historical data (past 180 days)...');
-            await fetchHistoricalData(180);
+            // 過去365日分のデータを取得（初回起動時）
+            console.log('Fetching historical data (past 365 days)...');
+            await fetchHistoricalData(365);
             console.log('Historical data loaded');
         } else {
             console.log('Running on Vercel - skipping historical data fetch');
