@@ -378,7 +378,17 @@ function getReportIcon(type) {
 
 function formatDateTime(dt) {
     if (!dt) return '-';
-    return dt.replace(' ', ' ');
+    try {
+        const date = new Date(dt);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hour = String(date.getHours()).padStart(2, '0');
+        const minute = String(date.getMinutes()).padStart(2, '0');
+        return `${year}/${month}/${day} ${hour}:${minute}`;
+    } catch (e) {
+        return dt.replace('T', ' ').substring(0, 16);
+    }
 }
 
 function escapeHtml(str) {
