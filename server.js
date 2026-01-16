@@ -18,6 +18,27 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
+// 初期化フラグ
+let isInitialized = false;
+
+// 初期化ミドルウェア（Vercel環境用）
+app.use(async (req, res, next) => {
+    if (!isInitialized) {
+        try {
+            await database.init();
+            // プリセット監視対象を初期化
+            for (const name of config.watchlistPresets) {
+                await database.addWatchlistItem('filer', name);
+            }
+            isInitialized = true;
+            console.log('Database initialized for Vercel');
+        } catch (error) {
+            console.error('Initialization error:', error);
+        }
+    }
+    next();
+});
+
 // ===== API Routes =====
 
 /**
@@ -259,31 +280,42 @@ async function startServer() {
 
         // プリセット監視対象を初期化
         for (const name of config.watchlistPresets) {
-            database.addWatchlistItem('filer', name);
+            await database.addWatchlistItem('filer', name);
         }
         console.log('Watchlist presets initialized');
 
-        // 過去180日分のデータを取得（初回起動時）
-        console.log('Fetching historical data (past 180 days)...');
-        await fetchHistoricalData(180);
-        console.log('Historical data loaded');
+        // Vercel環境では過去データ取得をスキップ（初回リクエスト時のタイムアウトを防ぐ）
+        if (process.env.VERCEL !== '1') {
+            // 過去180日分のデータを取得（初回起動時）
+            console.log('Fetching historical data (past 180 days)...');
+            await fetchHistoricalData(180);
+            console.log('Historical data loaded');
+        } else {
+            console.log('Running on Vercel - skipping historical data fetch');
+        }
 
-        // スケジューラー開始
-        scheduler.start((newReports) => {
-            console.log(`New reports detected: ${newReports.length}`);
-            // TODO: Web Push通知を送信
-        });
+        // スケジューラー開始（Vercel環境ではスキップ）
+        if (process.env.VERCEL !== '1') {
+            scheduler.start((newReports) => {
+                console.log(`New reports detected: ${newReports.length}`);
+                // TODO: Web Push通知を送信
+            });
+        }
 
-        // サーバー起動
-        app.listen(config.port, () => {
-            console.log(`\n🚀 EDINET Monitor Server running at http://localhost:${config.port}`);
-            console.log(`📊 API: http://localhost:${config.port}/api/reports`);
-            console.log(`📅 Polling every ${config.pollIntervalMinutes} minutes\n`);
-        });
+        // サーバー起動（ローカル環境のみ）
+        if (process.env.NODE_ENV !== 'production') {
+            app.listen(config.port, () => {
+                console.log(`\n🚀 EDINET Monitor Server running at http://localhost:${config.port}`);
+                console.log(`📊 API: http://localhost:${config.port}/api/reports`);
+                console.log(`📅 Polling every ${config.pollIntervalMinutes} minutes\n`);
+            });
+        }
 
     } catch (error) {
         console.error('Failed to start server:', error);
-        process.exit(1);
+        if (process.env.NODE_ENV !== 'production') {
+            process.exit(1);
+        }
     }
 }
 
@@ -316,4 +348,10 @@ async function fetchHistoricalData(days) {
     await Promise.all(promises);
 }
 
-startServer();
+// ローカル環境での起動
+if (process.env.NODE_ENV !== 'production') {
+    startServer();
+}
+
+// Vercel用のエクスポート
+export default app;
