@@ -642,175 +642,6 @@ body {
   background: var(--color-text-muted);
 }
 
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .header {
-    padding: 1rem;
-  }
-
-  .header-content {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .main {
-    padding: 1rem;
-  }
-
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .filter-bar {
-    flex-direction: column;
-  }
-
-  .filter-input,
-  .filter-select {
-    min-width: 100%;
-  }
-
-  .report-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .report-actions {
-    margin-top: 0.75rem;
-  }
-}
-
-/* ===== Report Details ===== */
-.report-details-compact {
-  padding: 0.4rem 0.6rem;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: var(--border-radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.details-loading-sm {
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-}
-
-.details-loading {
-  text-align: center;
-  color: var(--color-text-muted);
-  padding: 0.5rem;
-  font-size: 0.75rem;
-}
-
-.details-error {
-  text-align: center;
-  color: var(--color-danger);
-  padding: 0.5rem;
-  font-size: 0.75rem;
-}
-
-.details-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: auto auto;
-  gap: 0.3rem 0.5rem;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-}
-
-.detail-item.full-width {
-  grid-column: 1 / -1;
-}
-
-.detail-label {
-  font-size: 0.65rem;
-  color: var(--color-text-muted);
-  opacity: 0.8;
-}
-
-.detail-value {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--color-text);
-}
-
-.detail-value.ratio {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-primary-light);
-}
-
-.detail-value.change {
-  font-weight: 600;
-  font-size: 0.8rem;
-}
-
-.detail-value.change.positive {
-  color: var(--color-success);
-}
-
-.detail-value.change.negative {
-  color: var(--color-danger);
-}
-
-.detail-value.purpose {
-  font-size: 0.7rem;
-  line-height: 1.3;
-  color: var(--color-text-muted);
-  opacity: 0.9;
-}
-
-.btn-add-issuer-watch {
-  padding: 0.2rem 0.4rem;
-  background: var(--color-primary);
-  border: none;
-  border-radius: 4px;
-  color: white;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: var(--transition);
-}
-
-.btn-add-issuer-watch:hover {
-  background: var(--color-primary-light);
-  transform: scale(1.1);
-}
-
-/* 新しい詳細レイアウト */
-.details-grid-custom {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.details-row-1 {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.details-row-2 {
-  display: flex;
-}
-
-.detail-item-inline {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  white-space: nowrap;
-}
-
-.detail-item-full {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  flex: 1;
-}
-
 /* ===== Mobile Responsive ===== */
 @media (max-width: 768px) {
   html {
@@ -819,144 +650,201 @@ body {
 
   body {
     overflow-x: hidden;
+    width: 100%;
   }
 
+  /* ヘッダー周りの調整 */
   .header {
     padding: 0.75rem 1rem;
-    flex-wrap: wrap;
   }
 
   .header-content {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    width: 100%;
   }
 
   .header-stats {
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.5rem 1rem;
     font-size: 0.75rem;
+    justify-content: center;
   }
 
-  .stat-item {
-    font-size: 0.75rem;
+  .header-actions {
+    width: 100%;
+    justify-content: center;
   }
 
+  /* メインコンテンツ調整 */
   .main {
-    padding: 0.75rem;
+    padding: 0.5rem;
+    width: 100%;
+    max-width: 100vw;
   }
 
-  .filters-section {
-    padding: 0.75rem;
-  }
-
-  .filters-row {
+  /* フィルター周り */
+  .filter-bar {
     flex-direction: column;
-    gap: 0.5rem;
+    align-items: stretch;
+    padding: 1rem;
+    gap: 1rem;
   }
 
   .quick-filters {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .quick-filter-btn {
-    font-size: 0.75rem;
-    padding: 0.4rem 0.6rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
   }
 
   .filter-group {
     flex-direction: column;
-    width: 100%;
-    gap: 0.5rem;
+    align-items: stretch;
   }
 
   .filter-input,
   .filter-select {
     width: 100%;
-    font-size: 0.85rem;
+    min-width: 0;
+  }
+
+  .filter-checkbox {
+    padding: 0.5rem 0;
+  }
+
+  /* 報告書リスト */
+  .reports-list {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
   }
 
   .report-item {
     flex-direction: column;
-    padding: 0.75rem;
+    align-items: stretch;
+    padding: 1rem;
+    gap: 0.75rem;
   }
 
+  /* 報告書のメイン情報（左側） */
   .report-main-info {
     width: 100%;
+    min-width: 0;
   }
 
-  .report-details-compact {
+  .report-header-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .report-filer-section {
     width: 100%;
+    min-width: 0;
+    margin-bottom: 0.25rem;
+  }
+
+  .report-filer {
+    white-space: normal;
+    /* 複数行表示を許可 */
+    overflow: visible;
+  }
+
+  .report-meta-inline {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+  }
+
+  /* 詳細情報（右側 -> 下側に移動） */
+  .report-details-compact {
+    width: 100% !important;
+    /* PC用の固定幅を強制上書き */
     max-width: 100%;
     margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
   }
 
+  .details-grid-custom {
+    gap: 0.75rem;
+  }
+
+  /* 1行目: 銘柄コードなどを縦並びやラップ表示に */
   .details-row-1 {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 0.5rem;
   }
 
   .detail-item-inline {
     width: 100%;
     justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 0.25rem;
   }
 
-  .report-header-row {
+  .detail-item-inline:last-child {
+    border-bottom: none;
+  }
+
+  /* 2行目: 保有目的 */
+  .details-row-2 {
+    width: 100%;
+  }
+
+  .detail-item-full {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 0.25rem;
   }
 
-  .report-filer-section {
+  .detail-value.purpose {
+    white-space: normal;
+    word-break: break-all;
+  }
+
+  /* アクションボタン */
+  .report-actions-compact {
+    justify-content: flex-end;
     width: 100%;
-    min-width: auto;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--color-border);
+    padding-top: 0.75rem;
   }
 
-  .report-meta-inline {
-    width: 100%;
-    justify-content: flex-start;
+  .action-btn {
+    width: 40px;
+    /* タッチしやすいサイズに */
+    height: 40px;
   }
 
+  /* モーダル */
   .modal-content {
-    width: 95%;
-    max-width: 95%;
-    margin: 1rem;
+    width: 92%;
+    max-height: 85vh;
+    margin: 0;
   }
 }
 
 @media (max-width: 480px) {
-  .header h1 {
-    font-size: 1.2rem;
-  }
-
-  .btn {
-    font-size: 0.8rem;
-    padding: 0.5rem 0.8rem;
+  .header {
+    padding: 0.5rem;
   }
 
   .section-header h2 {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .report-filer {
-    font-size: 0.85rem;
-  }
-
-  .report-type {
-    font-size: 0.65rem;
-    padding: 0.1rem 0.4rem;
-  }
-
-  .meta-item {
-    font-size: 0.7rem;
+    font-size: 0.9rem;
   }
 
   .detail-label {
-    font-size: 0.65rem;
+    font-size: 0.7rem;
   }
 
   .detail-value {
-    font-size: 0.7rem;
+    font-size: 0.85rem;
   }
 }
