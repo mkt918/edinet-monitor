@@ -12,7 +12,9 @@ let state = {
     filters: {
         date: '',
         search: '',
-        type: ''
+        type: '',
+        watchedOnly: false,
+        articlesOnly: false
     }
 };
 
@@ -27,6 +29,8 @@ const elements = {
     dateFilterEnd: document.getElementById('dateFilterEnd'),
     searchFilter: document.getElementById('searchFilter'),
     typeFilter: document.getElementById('typeFilter'),
+    watchedOnlyFilter: document.getElementById('watchedOnlyFilter'),
+    articlesOnlyFilter: document.getElementById('articlesOnlyFilter'),
     clearFiltersBtn: document.getElementById('clearFiltersBtn'),
     refreshBtn: document.getElementById('refreshBtn'),
     watchlistModalBtn: document.getElementById('watchlistModalBtn'),
@@ -283,6 +287,20 @@ function filterReports() {
             }
         }
 
+        // 監視対象のみフィルター
+        if (state.filters.watchedOnly) {
+            if (!isInWatchlist(report.filer_name)) {
+                return false;
+            }
+        }
+
+        // 定款変更のみフィルター
+        if (state.filters.articlesOnly) {
+            if (!report.report_type?.includes('定款')) {
+                return false;
+            }
+        }
+
         return true;
     });
 }
@@ -302,38 +320,38 @@ function renderDetailsContent(details) {
     const isIssuerWatched = details.issuerName && isInWatchlist(details.issuerName);
 
     return `
-        <div class="details-grid">
-            <div class="detail-item full-width">
-                <div style="display: flex; align-items: center; gap: 0.5rem; justify-content: space-between;">
-                    <div>
-                        <span class="detail-label">📈 対象銘柄</span>
-                        <span class="detail-value">${escapeHtml(details.issuerName || '-')}</span>
-                    </div>
+        <div class="details-grid-custom">
+            <div class="details-row-1">
+                <div class="detail-item-inline">
+                    <span class="detail-label">📈 対象銘柄</span>
+                    <span class="detail-value">${escapeHtml(details.issuerName || '-')}</span>
                     ${details.issuerName && !isIssuerWatched ? `
                         <button class="btn-add-issuer-watch" data-issuer="${escapeHtml(details.issuerName)}" title="発行者を監視対象に追加">👁️</button>
                     ` : ''}
                 </div>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">🏷️ 証券コード</span>
-                <span class="detail-value">${escapeHtml(details.securityCode || '-')}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">📊 保有割合</span>
-                <span class="detail-value ratio">${details.holdingRatioFormatted || '-'}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">📉 前回</span>
-                <span class="detail-value">${details.previousHoldingRatioFormatted || '-'}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label">📈 変化</span>
-                <span class="detail-value change ${changeClass}">${details.holdingRatioChangeFormatted || '-'}</span>
+                <div class="detail-item-inline">
+                    <span class="detail-label">🏷️ 証券コード</span>
+                    <span class="detail-value">${escapeHtml(details.securityCode || '-')}</span>
+                </div>
+                <div class="detail-item-inline">
+                    <span class="detail-label">📊 保有割合</span>
+                    <span class="detail-value ratio">${details.holdingRatioFormatted || '-'}</span>
+                </div>
+                <div class="detail-item-inline">
+                    <span class="detail-label">📉 前回</span>
+                    <span class="detail-value">${details.previousHoldingRatioFormatted || '-'}</span>
+                </div>
+                <div class="detail-item-inline">
+                    <span class="detail-label">📈 変化</span>
+                    <span class="detail-value change ${changeClass}">${details.holdingRatioChangeFormatted || '-'}</span>
+                </div>
             </div>
             ${details.purposeOfHolding ? `
-            <div class="detail-item full-width">
-                <span class="detail-label">🎯 保有目的</span>
-                <span class="detail-value purpose">${escapeHtml(details.purposeOfHolding)}</span>
+            <div class="details-row-2">
+                <div class="detail-item-full">
+                    <span class="detail-label">🎯 保有目的</span>
+                    <span class="detail-value purpose">${escapeHtml(details.purposeOfHolding)}</span>
+                </div>
             </div>
             ` : ''}
         </div>
@@ -346,6 +364,7 @@ function getTypeClass(type) {
     if (!type) return '';
     if (type.includes('変更')) return 'change';
     if (type.includes('訂正')) return 'correction';
+    if (type.includes('定款')) return 'articles';
     return '';
 }
 
@@ -353,6 +372,7 @@ function getReportIcon(type) {
     if (!type) return '📑';
     if (type.includes('変更')) return '🔄';
     if (type.includes('訂正')) return '✏️';
+    if (type.includes('定款')) return '📜';
     return '📑';
 }
 
@@ -426,17 +446,33 @@ function setupEventListeners() {
         renderReports();
     });
 
+    // 監視対象のみフィルター
+    elements.watchedOnlyFilter.addEventListener('change', (e) => {
+        state.filters.watchedOnly = e.target.checked;
+        renderReports();
+    });
+
+    // 定款変更のみフィルター
+    elements.articlesOnlyFilter.addEventListener('change', (e) => {
+        state.filters.articlesOnly = e.target.checked;
+        renderReports();
+    });
+
     // フィルタークリアボタン
     elements.clearFiltersBtn.addEventListener('click', () => {
         elements.dateFilterStart.value = '';
         elements.dateFilterEnd.value = '';
         elements.searchFilter.value = '';
         elements.typeFilter.value = '';
+        elements.watchedOnlyFilter.checked = false;
+        elements.articlesOnlyFilter.checked = false;
         state.filters = {
             dateStart: '',
             dateEnd: '',
             search: '',
-            type: ''
+            type: '',
+            watchedOnly: false,
+            articlesOnly: false
         };
         renderReports();
     });

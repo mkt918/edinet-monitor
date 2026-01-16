@@ -27,7 +27,7 @@ app.use(express.static(join(__dirname, 'public')));
 app.get('/api/reports', async (req, res) => {
     try {
         const { date, search, filerName, limit = 100, offset = 0 } = req.query;
-        const reports = database.getReports({
+        const reports = await database.getReports({
             date,
             search,
             filerName,
@@ -69,10 +69,10 @@ app.get('/api/reports/live', async (req, res) => {
  * ダッシュボード統計
  * GET /api/stats
  */
-app.get('/api/stats', (req, res) => {
+app.get('/api/stats', async (req, res) => {
     try {
         const today = EdinetClient.getToday();
-        const todayCount = database.getReportCountByDate(today);
+        const todayCount = await database.getReportCountByDate(today);
         const schedulerStatus = scheduler.getStatus();
 
         res.json({
@@ -107,9 +107,9 @@ app.post('/api/refresh', async (req, res) => {
  * 監視対象一覧を取得
  * GET /api/watchlist
  */
-app.get('/api/watchlist', (req, res) => {
+app.get('/api/watchlist', async (req, res) => {
     try {
-        const watchlist = database.getWatchlist();
+        const watchlist = await database.getWatchlist();
         res.json({ success: true, data: watchlist });
     } catch (error) {
         console.error('Error fetching watchlist:', error);
@@ -121,7 +121,7 @@ app.get('/api/watchlist', (req, res) => {
  * 監視対象を追加
  * POST /api/watchlist
  */
-app.post('/api/watchlist', (req, res) => {
+app.post('/api/watchlist', async (req, res) => {
     try {
         const { type, name } = req.body;
         if (!type || !name) {
@@ -130,7 +130,7 @@ app.post('/api/watchlist', (req, res) => {
                 error: 'type and name are required'
             });
         }
-        database.addWatchlistItem(type, name);
+        await database.addWatchlistItem(type, name);
         res.json({ success: true, message: 'Added to watchlist' });
     } catch (error) {
         console.error('Error adding to watchlist:', error);
@@ -142,9 +142,9 @@ app.post('/api/watchlist', (req, res) => {
  * 監視対象を削除
  * DELETE /api/watchlist/:id
  */
-app.delete('/api/watchlist/:id', (req, res) => {
+app.delete('/api/watchlist/:id', async (req, res) => {
     try {
-        database.removeWatchlistItem(parseInt(req.params.id));
+        await database.removeWatchlistItem(parseInt(req.params.id));
         res.json({ success: true, message: 'Removed from watchlist' });
     } catch (error) {
         console.error('Error removing from watchlist:', error);
@@ -263,6 +263,11 @@ async function startServer() {
         }
         console.log('Watchlist presets initialized');
 
+        // 過去30日分のデータを取得（初回起動時）
+        console.log('Fetching historical data (past 30 days)...');
+        await fetchHistoricalData(30);
+        console.log('Historical data loaded');
+
         // スケジューラー開始
         scheduler.start((newReports) => {
             console.log(`New reports detected: ${newReports.length}`);
@@ -280,6 +285,35 @@ async function startServer() {
         console.error('Failed to start server:', error);
         process.exit(1);
     }
+}
+
+/**
+ * 過去のデータを取得してDBに保存
+ * @param {number} days - 遡る日数
+ */
+async function fetchHistoricalData(days) {
+    const promises = [];
+
+    for (let i = 0; i < days; i++) {
+        const date = EdinetClient.getDaysAgo(i);
+        promises.push(
+            edinetClient.getLargeShareholdingReports(date)
+                .then(reports => {
+                    if (reports.length > 0) {
+                        database.saveReports(reports);
+                        console.log(`  ${date}: ${reports.length} reports`);
+                    }
+                })
+                .catch(err => {
+                    console.error(`  ${date}: Error - ${err.message}`);
+                })
+        );
+
+        // API制限を考慮して100msの遅延を入れる
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    await Promise.all(promises);
 }
 
 startServer();

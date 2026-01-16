@@ -35,6 +35,13 @@ export class EdinetClient {
      * @param {string} date - YYYY-MM-DD形式の日付
      * @returns {Promise<Array>} 大量保有報告書一覧
      */
+    /**
+     * 監視対象の報告書をフィルタリングして取得
+     * - 大量保有報告書 (060)
+     * - 定款変更を含む報告書 (010)
+     * @param {string} date - YYYY-MM-DD形式の日付
+     * @returns {Promise<Array>} 報告書一覧
+     */
     async getLargeShareholdingReports(date) {
         const data = await this.getDocumentList(date);
 
@@ -42,10 +49,21 @@ export class EdinetClient {
             return [];
         }
 
-        // 府令コード060（大量保有）でフィルタリング
-        const reports = data.results.filter(doc =>
-            doc.ordinanceCode === config.ordinanceCode
-        );
+        // フィルタリング
+        const reports = data.results.filter(doc => {
+            // 1. 大量保有報告書 (060)
+            if (doc.ordinanceCode === config.ordinanceCode) return true;
+
+            // 2. 定款変更を含む報告書 (010)
+            if (doc.ordinanceCode === config.disclosureOrdinanceCode) {
+                // 件名に「定款」が含まれるかチェック
+                if (doc.docDescription && doc.docDescription.includes('定款')) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
 
         return reports.map(doc => this.formatReport(doc));
     }
@@ -69,17 +87,27 @@ export class EdinetClient {
             parentDocId: doc.parentDocID,
             pdfFlag: doc.pdfFlag === '1',
             csvFlag: doc.csvFlag === '1',
-            reportType: this.getReportType(doc.formCode),
+            reportType: this.getReportType(doc), // doc全体を渡すように変更
             isWithdrawn: doc.withdrawalStatus === '1'
         };
     }
 
     /**
-     * 様式コードから報告書種別を判定
-     * @param {string} formCode - 様式コード
+     * 報告書種別を判定
+     * @param {Object} doc - 書類データ
      * @returns {string} 報告書種別
      */
-    getReportType(formCode) {
+    getReportType(doc) {
+        const formCode = doc.formCode;
+
+        // 定款関連
+        if (doc.docDescription && doc.docDescription.includes('定款')) {
+            if (doc.docDescription.includes('変更')) {
+                return '定款変更';
+            }
+            return '定款関連';
+        }
+
         const types = {
             '010000': '大量保有報告書',
             '020000': '変更報告書',
@@ -93,7 +121,7 @@ export class EdinetClient {
             return '訂正報告書';
         }
 
-        return types[formCode] || '大量保有関連報告書';
+        return types[formCode] || '報告書';
     }
 
     /**

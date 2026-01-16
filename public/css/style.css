@@ -233,6 +233,26 @@ body {
   flex-wrap: wrap;
 }
 
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  user-select: none;
+}
+
+.filter-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.filter-checkbox:hover {
+  color: var(--color-primary);
+}
+
 .filter-input,
 .filter-select {
   padding: 0.6rem 1rem;
@@ -323,17 +343,19 @@ body {
 .report-header-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 0.5rem;
   margin-bottom: 0.3rem;
+  flex-wrap: wrap;
 }
 
 .report-filer-section {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 200px;
+  max-width: 100%;
 }
 
 .watch-star {
@@ -345,6 +367,11 @@ body {
   font-weight: 600;
   color: var(--color-text);
   font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .report-type {
@@ -366,10 +393,17 @@ body {
   color: var(--color-bg);
 }
 
+.report-type.articles {
+  background: #00b894;
+  /* Green */
+  color: white;
+}
+
 .report-meta-inline {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .meta-item {
@@ -383,11 +417,15 @@ body {
   color: var(--color-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  max-height: 2.8em;
 }
 
 .report-details-compact {
-  width: 280px;
+  width: 840px;
   flex-shrink: 0;
 }
 
@@ -739,4 +777,36 @@ body {
 .btn-add-issuer-watch:hover {
   background: var(--color-primary-light);
   transform: scale(1.1);
+}
+
+/* 新しい詳細レイアウト */
+.details-grid-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.details-row-1 {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.details-row-2 {
+  display: flex;
+}
+
+.detail-item-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.detail-item-full {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1;
 }

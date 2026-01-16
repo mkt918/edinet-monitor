@@ -1,79 +1,24 @@
-import initSqlJs from 'sql.js';
+import { createClient } from '@supabase/supabase-js';
+import { config } from '../config.js';
 
 /**
- * データベース管理クラス（sql.js使用 - 完全メモリベース）
- * Vercel対応: ファイルシステムへの書き込みなし
+ * データベース管理クラス（Supabase使用）
  */
 class DatabaseService {
     constructor() {
-        this.db = null;
-        this.SQL = null;
+        this.supabase = null;
     }
 
     /**
-     * データベース接続を初期化（メモリのみ）
+     * Supabase接続を初期化
      */
     async init() {
-        // sql.js初期化
-        this.SQL = await initSqlJs();
+        if (!config.supabaseUrl || !config.supabaseAnonKey) {
+            throw new Error('Supabase credentials not found. Please set SUPABASE_URL and SUPABASE_ANON_KEY in .env file');
+        }
 
-        // メモリ上にDBを作成
-        this.db = new this.SQL.Database();
-
-        this.createTables();
-        console.log('Database initialized (in-memory mode for Vercel)');
-    }
-
-    /**
-     * テーブル作成
-     */
-    createTables() {
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS reports (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                doc_id TEXT UNIQUE NOT NULL,
-                edinet_code TEXT,
-                sec_code TEXT,
-                filer_name TEXT NOT NULL,
-                submit_date_time TEXT NOT NULL,
-                doc_description TEXT,
-                form_code TEXT,
-                report_type TEXT,
-                issuer_edinet_code TEXT,
-                subject_edinet_code TEXT,
-                parent_doc_id TEXT,
-                pdf_flag INTEGER DEFAULT 0,
-                csv_flag INTEGER DEFAULT 0,
-                is_withdrawn INTEGER DEFAULT 0,
-                is_notified INTEGER DEFAULT 0,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS watchlist (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                type TEXT NOT NULL,
-                name TEXT NOT NULL,
-                is_active INTEGER DEFAULT 1,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(type, name)
-            )
-        `);
-
-        this.db.run(`
-            CREATE TABLE IF NOT EXISTS notifications (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                doc_id TEXT NOT NULL,
-                message TEXT,
-                sent_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // インデックス作成
-        this.db.run(`CREATE INDEX IF NOT EXISTS idx_reports_submit_date ON reports(submit_date_time)`);
-        this.db.run(`CREATE INDEX IF NOT EXISTS idx_reports_filer_name ON reports(filer_name)`);
-        this.db.run(`CREATE INDEX IF NOT EXISTS idx_watchlist_type ON watchlist(type)`);
+        this.supabase = createClient(config.supabaseUrl, config.supabaseAnonKey);
+        console.log('Database initialized (Supabase)');
     }
 
     /**
@@ -81,32 +26,33 @@ class DatabaseService {
      * @param {Object} report - 報告書データ
      * @returns {boolean} 新規追加されたかどうか
      */
-    saveReport(report) {
+    async saveReport(report) {
         try {
-            this.db.run(`
-                INSERT OR IGNORE INTO reports 
-                (doc_id, edinet_code, sec_code, filer_name, submit_date_time, 
-                 doc_description, form_code, report_type, issuer_edinet_code, 
-                 subject_edinet_code, parent_doc_id, pdf_flag, csv_flag, is_withdrawn)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [
-                report.docId,
-                report.edinetCode,
-                report.secCode,
-                report.filerName,
-                report.submitDateTime,
-                report.docDescription,
-                report.formCode,
-                report.reportType,
-                report.issuerEdinetCode,
-                report.subjectEdinetCode,
-                report.parentDocId,
-                report.pdfFlag ? 1 : 0,
-                report.csvFlag ? 1 : 0,
-                report.isWithdrawn ? 1 : 0
-            ]);
-            return this.db.getRowsModified() > 0;
+            const { error } = await this.supabase
+                .from('reports')
+                .upsert({
+                    doc_id: report.docId,
+                    edinet_code: report.edinetCode,
+                    sec_code: report.secCode,
+                    filer_name: report.filerName,
+                    submit_date_time: report.submitDateTime,
+                    doc_description: report.docDescription,
+                    form_code: report.formCode,
+                    report_type: report.reportType,
+                    issuer_edinet_code: report.issuerEdinetCode,
+                    subject_edinet_code: report.subjectEdinetCode,
+                    parent_doc_id: report.parentDocId,
+                    pdf_flag: report.pdfFlag,
+                    csv_flag: report.csvFlag,
+                    is_withdrawn: report.isWithdrawn
+                }, {
+                    onConflict: 'doc_id',
+                    ignoreDuplicates: true
+                });
+
+            return !error;
         } catch (e) {
+            console.error('Error saving report:', e);
             return false;
         }
     }
@@ -116,17 +62,45 @@ class DatabaseService {
      * @param {Array} reports - 報告書配列
      * @returns {number} 新規追加された件数
      */
-    saveReports(reports) {
-        let newCount = 0;
-        for (const report of reports) {
-            if (this.saveReport(report)) {
-                newCount++;
+    async saveReports(reports) {
+        if (!reports || reports.length === 0) return 0;
+
+        try {
+            const { data, error } = await this.supabase
+                .from('reports')
+                .upsert(
+                    reports.map(report => ({
+                        doc_id: report.docId,
+                        edinet_code: report.edinetCode,
+                        sec_code: report.secCode,
+                        filer_name: report.filerName,
+                        submit_date_time: report.submitDateTime,
+                        doc_description: report.docDescription,
+                        form_code: report.formCode,
+                        report_type: report.reportType,
+                        issuer_edinet_code: report.issuerEdinetCode,
+                        subject_edinet_code: report.subjectEdinetCode,
+                        parent_doc_id: report.parentDocId,
+                        pdf_flag: report.pdfFlag,
+                        csv_flag: report.csvFlag,
+                        is_withdrawn: report.isWithdrawn
+                    })),
+                    {
+                        onConflict: 'doc_id',
+                        ignoreDuplicates: true
+                    }
+                );
+
+            if (error) {
+                console.error('Error saving reports:', error);
+                return 0;
             }
+
+            return data ? data.length : 0;
+        } catch (e) {
+            console.error('Error in saveReports:', e);
+            return 0;
         }
-        if (newCount > 0) {
-            this.saveToFile();
-        }
-        return newCount;
     }
 
     /**
@@ -134,39 +108,41 @@ class DatabaseService {
      * @param {Object} options - 検索オプション
      * @returns {Array} 報告書一覧
      */
-    getReports(options = {}) {
+    async getReports(options = {}) {
         const { limit = 100, offset = 0, date, filerName, search } = options;
 
-        let sql = 'SELECT * FROM reports WHERE 1=1';
-        const params = [];
+        try {
+            let query = this.supabase
+                .from('reports')
+                .select('*')
+                .order('submit_date_time', { ascending: false });
 
-        if (date) {
-            sql += ' AND submit_date_time LIKE ?';
-            params.push(`${date}%`);
+            if (date) {
+                query = query.ilike('submit_date_time', `${date}%`);
+            }
+
+            if (filerName) {
+                query = query.ilike('filer_name', `%${filerName}%`);
+            }
+
+            if (search) {
+                query = query.or(`filer_name.ilike.%${search}%,doc_description.ilike.%${search}%`);
+            }
+
+            query = query.range(offset, offset + limit - 1);
+
+            const { data, error } = await query;
+
+            if (error) {
+                console.error('Error fetching reports:', error);
+                return [];
+            }
+
+            return data || [];
+        } catch (e) {
+            console.error('Error in getReports:', e);
+            return [];
         }
-
-        if (filerName) {
-            sql += ' AND filer_name LIKE ?';
-            params.push(`%${filerName}%`);
-        }
-
-        if (search) {
-            sql += ' AND (filer_name LIKE ? OR doc_description LIKE ?)';
-            params.push(`%${search}%`, `%${search}%`);
-        }
-
-        sql += ' ORDER BY submit_date_time DESC LIMIT ? OFFSET ?';
-        params.push(limit, offset);
-
-        const stmt = this.db.prepare(sql);
-        stmt.bind(params);
-
-        const results = [];
-        while (stmt.step()) {
-            results.push(stmt.getAsObject());
-        }
-        stmt.free();
-        return results;
     }
 
     /**
@@ -174,26 +150,44 @@ class DatabaseService {
      * @param {string} date - 日付
      * @returns {number} 件数
      */
-    getReportCountByDate(date) {
-        const stmt = this.db.prepare('SELECT COUNT(*) as count FROM reports WHERE submit_date_time LIKE ?');
-        stmt.bind([`${date}%`]);
-        stmt.step();
-        const result = stmt.getAsObject();
-        stmt.free();
-        return result.count;
+    async getReportCountByDate(date) {
+        try {
+            const { count, error } = await this.supabase
+                .from('reports')
+                .select('*', { count: 'exact', head: true })
+                .ilike('submit_date_time', `${date}%`);
+
+            if (error) {
+                console.error('Error counting reports:', error);
+                return 0;
+            }
+
+            return count || 0;
+        } catch (e) {
+            console.error('Error in getReportCountByDate:', e);
+            return 0;
+        }
     }
 
     /**
      * 監視対象を追加
-     * @param {string} type - タイプ（filer, issuer）
+     * @param {string} type - タイプ（filer, issuer...）
      * @param {string} name - 名前
      */
-    addWatchlistItem(type, name) {
+    async addWatchlistItem(type, name) {
         try {
-            this.db.run('INSERT OR IGNORE INTO watchlist (type, name) VALUES (?, ?)', [type, name]);
-            this.saveToFile();
+            await this.supabase
+                .from('watchlist')
+                .upsert({
+                    type,
+                    name,
+                    is_active: true
+                }, {
+                    onConflict: 'type,name',
+                    ignoreDuplicates: true
+                });
         } catch (e) {
-            // 重複は無視
+            console.error('Error adding watchlist item:', e);
         }
     }
 
@@ -202,77 +196,100 @@ class DatabaseService {
      * @param {string} type - タイプ（省略時は全て）
      * @returns {Array} 監視対象一覧
      */
-    getWatchlist(type = null) {
-        let sql = 'SELECT * FROM watchlist WHERE is_active = 1';
-        const params = [];
+    async getWatchlist(type = null) {
+        try {
+            let query = this.supabase
+                .from('watchlist')
+                .select('*')
+                .eq('is_active', true);
 
-        if (type) {
-            sql += ' AND type = ?';
-            params.push(type);
+            if (type) {
+                query = query.eq('type', type);
+            }
+
+            const { data, error } = await query;
+
+            if (error) {
+                console.error('Error fetching watchlist:', error);
+                return [];
+            }
+
+            return data || [];
+        } catch (e) {
+            console.error('Error in getWatchlist:', e);
+            return [];
         }
-
-        const stmt = this.db.prepare(sql);
-        if (params.length) stmt.bind(params);
-
-        const results = [];
-        while (stmt.step()) {
-            results.push(stmt.getAsObject());
-        }
-        stmt.free();
-        return results;
     }
 
     /**
      * 監視対象を削除
      * @param {number} id - ID
      */
-    removeWatchlistItem(id) {
-        this.db.run('UPDATE watchlist SET is_active = 0 WHERE id = ?', [id]);
-        this.saveToFile();
+    async removeWatchlistItem(id) {
+        try {
+            await this.supabase
+                .from('watchlist')
+                .update({ is_active: false })
+                .eq('id', id);
+        } catch (e) {
+            console.error('Error removing watchlist item:', e);
+        }
     }
 
     /**
      * 未通知の報告書を取得（監視対象に該当するもの）
      * @returns {Array} 未通知報告書一覧
      */
-    getUnnotifiedReports() {
-        const watchlist = this.getWatchlist('filer');
-        if (watchlist.length === 0) {
+    async getUnnotifiedReports() {
+        try {
+            const watchlist = await this.getWatchlist('filer');
+            if (watchlist.length === 0) {
+                return [];
+            }
+
+            const names = watchlist.map(w => w.name);
+
+            const { data, error } = await this.supabase
+                .from('reports')
+                .select('*')
+                .eq('is_notified', false)
+                .order('submit_date_time', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching unnotified reports:', error);
+                return [];
+            }
+
+            // フィルタリング（Supabaseのクエリでは複雑なLIKE条件が難しいため、アプリ側で処理）
+            return (data || []).filter(report =>
+                names.some(name => report.filer_name && report.filer_name.includes(name))
+            );
+        } catch (e) {
+            console.error('Error in getUnnotifiedReports:', e);
             return [];
         }
-
-        const conditions = watchlist.map(w =>
-            `filer_name LIKE '%${w.name.replace(/'/g, "''")}%'`
-        ).join(' OR ');
-
-        const sql = `SELECT * FROM reports WHERE is_notified = 0 AND (${conditions}) ORDER BY submit_date_time DESC`;
-        const stmt = this.db.prepare(sql);
-
-        const results = [];
-        while (stmt.step()) {
-            results.push(stmt.getAsObject());
-        }
-        stmt.free();
-        return results;
     }
 
     /**
      * 報告書を通知済みに更新
      * @param {string} docId - 書類管理番号
      */
-    markAsNotified(docId) {
-        this.db.run('UPDATE reports SET is_notified = 1 WHERE doc_id = ?', [docId]);
-        this.saveToFile();
+    async markAsNotified(docId) {
+        try {
+            await this.supabase
+                .from('reports')
+                .update({ is_notified: true })
+                .eq('doc_id', docId);
+        } catch (e) {
+            console.error('Error marking as notified:', e);
+        }
     }
 
     /**
-     * データベースを閉じる
+     * データベースを閉じる（Supabaseでは不要だが互換性のため残す）
      */
     close() {
-        if (this.db) {
-            this.saveToFile();
-            this.db.close();
-        }
+        // Supabaseクライアントは自動的に管理されるため、明示的なクローズは不要
     }
 }
 
