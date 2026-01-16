@@ -1,18 +1,13 @@
 import { config } from '../config.js';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 /**
- * 大量保有報告書のCSVデータをパースするクラス
+ * 大量保有報告書のCSVデータをパースするクラス（メモリベース）
+ * Vercel対応: ファイルシステムへの書き込みなし
  */
 export class CsvParser {
 
     /**
-     * 書類IDからCSVデータを取得してパース
+     * 書類IDからCSVデータを取得してパース（メモリのみ）
      * @param {string} docId - EDINET書類ID
      * @returns {Promise<Object|null>} パース結果
      */
@@ -27,83 +22,33 @@ export class CsvParser {
                 return null;
             }
 
-            // ZIPファイルを一時保存
+            // ZIPファイルをメモリバッファで処理
             const buffer = Buffer.from(await response.arrayBuffer());
-            const tempDir = join(__dirname, '..', 'temp');
-            const zipPath = join(tempDir, `${docId}.zip`);
-            const extractDir = join(tempDir, docId);
 
-            // ディレクトリ作成
-            if (!fs.existsSync(tempDir)) {
-                fs.mkdirSync(tempDir, { recursive: true });
-            }
-
-            // ZIPファイルを保存
-            fs.writeFileSync(zipPath, buffer);
-
-            // ZIPを展開（AdmZipを使用）
+            // ZIPを展開（AdmZipを使用 - メモリのみ）
             const AdmZip = (await import('adm-zip')).default;
-            const zip = new AdmZip(zipPath);
-            zip.extractAllTo(extractDir, true);
+            const zip = new AdmZip(buffer);
+            const zipEntries = zip.getEntries();
 
             // CSVファイルを検索
-            const csvFile = this.findCsvFile(extractDir);
-            if (!csvFile) {
+            const csvEntry = zipEntries.find(entry =>
+                !entry.isDirectory && entry.entryName.endsWith('.csv')
+            );
+
+            if (!csvEntry) {
                 console.error(`No CSV file found for ${docId}`);
-                this.cleanup(zipPath, extractDir);
                 return null;
             }
 
             // CSVをパース（UTF-16LE）
-            const csvContent = fs.readFileSync(csvFile, 'utf16le');
+            const csvContent = csvEntry.getData().toString('utf16le');
             const result = this.parseLargeHoldingCsv(csvContent);
-
-            // クリーンアップ
-            this.cleanup(zipPath, extractDir);
 
             return result;
 
         } catch (error) {
             console.error(`Error parsing CSV for ${docId}:`, error);
             return null;
-        }
-    }
-
-    /**
-     * CSVファイルを再帰的に検索
-     * @param {string} dir - 検索ディレクトリ
-     * @returns {string|null} CSVファイルパス
-     */
-    static findCsvFile(dir) {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-        for (const entry of entries) {
-            const fullPath = join(dir, entry.name);
-            if (entry.isDirectory()) {
-                const found = this.findCsvFile(fullPath);
-                if (found) return found;
-            } else if (entry.name.endsWith('.csv')) {
-                return fullPath;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * 一時ファイルをクリーンアップ
-     * @param {string} zipPath - ZIPファイルパス
-     * @param {string} extractDir - 展開ディレクトリ
-     */
-    static cleanup(zipPath, extractDir) {
-        try {
-            if (fs.existsSync(zipPath)) {
-                fs.unlinkSync(zipPath);
-            }
-            if (fs.existsSync(extractDir)) {
-                fs.rmSync(extractDir, { recursive: true, force: true });
-            }
-        } catch (e) {
-            // クリーンアップ失敗は無視
         }
     }
 

@@ -16,18 +16,25 @@
     <!-- ヘッダー -->
     <header class="header">
       <div class="header-content">
-        <h1 class="logo">
-          <span class="logo-icon">📊</span>
-          EDINET モニター
-        </h1>
+        <div class="header-left">
+          <h1 class="logo">
+            <span class="logo-icon">📊</span>
+            EDINET Monitor
+          </h1>
+          <div class="header-stats">
+            <span class="stat-item">📄 <strong id="todayCount">--</strong>件</span>
+            <span class="stat-item">⏰ <strong id="lastUpdated">--:--</strong></span>
+            <span class="stat-item">⭐ <strong id="watchlistCount">--</strong>件監視中</span>
+          </div>
+        </div>
         <div class="header-actions">
-          <button id="refreshBtn" class="btn btn-primary">
+          <button id="refreshBtn" class="btn btn-primary btn-sm">
             <span class="btn-icon">🔄</span>
             更新
           </button>
-          <button id="notifyBtn" class="btn btn-secondary">
-            <span class="btn-icon">🔔</span>
-            通知設定
+          <button id="watchlistModalBtn" class="btn btn-secondary btn-sm">
+            <span class="btn-icon">⭐</span>
+            監視設定
           </button>
         </div>
       </div>
@@ -35,59 +42,29 @@
 
     <!-- メインコンテンツ -->
     <main class="main">
-      <!-- ステータスカード -->
-      <section class="stats-section">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">📄</div>
-            <div class="stat-content">
-              <div class="stat-value" id="todayCount">--</div>
-              <div class="stat-label">本日の報告書</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">⏰</div>
-            <div class="stat-content">
-              <div class="stat-value" id="lastUpdated">--:--</div>
-              <div class="stat-label">最終更新</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">👁️</div>
-            <div class="stat-content">
-              <div class="stat-value" id="watchlistCount">--</div>
-              <div class="stat-label">監視対象</div>
-            </div>
-          </div>
-          <div class="stat-card status-card">
-            <div class="stat-icon">🟢</div>
-            <div class="stat-content">
-              <div class="stat-value" id="schedulerStatus">稼働中</div>
-              <div class="stat-label">自動監視</div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- フィルター -->
       <section class="filter-section">
         <div class="filter-bar">
-          <div class="filter-group">
-            <input type="date" id="dateFilterStart" class="filter-input" placeholder="開始日">
-            <span style="color: var(--color-text-muted); padding: 0 0.5rem;">〜</span>
-            <input type="date" id="dateFilterEnd" class="filter-input" placeholder="終了日">
-            <input type="text" id="searchFilter" class="filter-input" placeholder="提出者名で検索...">
+          <div class="quick-filters">
+            <button class="quick-filter-btn" data-range="today">今日</button>
+            <button class="quick-filter-btn" data-range="week">今週</button>
+            <button class="quick-filter-btn" data-range="month">今月</button>
+            <button class="quick-filter-btn active" data-range="all">全て</button>
           </div>
-          <div class="filter-group">
-            <select id="typeFilter" class="filter-select">
+          <div class="filter-inputs">
+            <input type="date" id="dateFilterStart" class="filter-input filter-input-sm" placeholder="開始日">
+            <span class="filter-separator">〜</span>
+            <input type="date" id="dateFilterEnd" class="filter-input filter-input-sm" placeholder="終了日">
+            <input type="text" id="searchFilter" class="filter-input filter-input-sm" placeholder="🔍 提出者名で検索...">
+            <select id="typeFilter" class="filter-select filter-select-sm">
               <option value="">全ての報告書</option>
               <option value="大量保有報告書">大量保有報告書</option>
               <option value="変更報告書">変更報告書</option>
               <option value="訂正報告書">訂正報告書</option>
             </select>
-            <button id="clearFiltersBtn" class="btn btn-secondary">
+            <button id="clearFiltersBtn" class="btn btn-secondary btn-sm">
               <span class="btn-icon">✕</span>
-              絞り込みをクリア
             </button>
           </div>
         </div>

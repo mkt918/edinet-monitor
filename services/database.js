@@ -1,54 +1,27 @@
 import initSqlJs from 'sql.js';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import fs from 'fs';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 /**
- * データベース管理クラス（sql.js使用）
+ * データベース管理クラス（sql.js使用 - 完全メモリベース）
+ * Vercel対応: ファイルシステムへの書き込みなし
  */
 class DatabaseService {
     constructor() {
-        this.dbPath = join(__dirname, '..', 'data', 'reports.db');
         this.db = null;
         this.SQL = null;
     }
 
     /**
-     * データベース接続を初期化
+     * データベース接続を初期化（メモリのみ）
      */
     async init() {
-        // dataディレクトリがなければ作成
-        const dataDir = join(__dirname, '..', 'data');
-        if (!fs.existsSync(dataDir)) {
-            fs.mkdirSync(dataDir, { recursive: true });
-        }
-
         // sql.js初期化
         this.SQL = await initSqlJs();
 
-        // 既存DBがあれば読み込み
-        if (fs.existsSync(this.dbPath)) {
-            const buffer = fs.readFileSync(this.dbPath);
-            this.db = new this.SQL.Database(buffer);
-        } else {
-            this.db = new this.SQL.Database();
-        }
+        // メモリ上にDBを作成
+        this.db = new this.SQL.Database();
 
         this.createTables();
-        this.saveToFile();
-        console.log('Database initialized:', this.dbPath);
-    }
-
-    /**
-     * DBをファイルに保存
-     */
-    saveToFile() {
-        const data = this.db.export();
-        const buffer = Buffer.from(data);
-        fs.writeFileSync(this.dbPath, buffer);
+        console.log('Database initialized (in-memory mode for Vercel)');
     }
 
     /**

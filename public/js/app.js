@@ -22,7 +22,6 @@ const elements = {
     todayCount: document.getElementById('todayCount'),
     lastUpdated: document.getElementById('lastUpdated'),
     watchlistCount: document.getElementById('watchlistCount'),
-    schedulerStatus: document.getElementById('schedulerStatus'),
     reportCount: document.getElementById('reportCount'),
     dateFilterStart: document.getElementById('dateFilterStart'),
     dateFilterEnd: document.getElementById('dateFilterEnd'),
@@ -30,7 +29,7 @@ const elements = {
     typeFilter: document.getElementById('typeFilter'),
     clearFiltersBtn: document.getElementById('clearFiltersBtn'),
     refreshBtn: document.getElementById('refreshBtn'),
-    notifyBtn: document.getElementById('notifyBtn'),
+    watchlistModalBtn: document.getElementById('watchlistModalBtn'),
     watchlistModal: document.getElementById('watchlistModal'),
     closeModal: document.getElementById('closeModal'),
     watchlistItems: document.getElementById('watchlistItems'),
@@ -115,9 +114,6 @@ function renderStats() {
             minute: '2-digit'
         });
     }
-
-    elements.schedulerStatus.textContent =
-        state.stats.scheduler?.isScheduled ? '稼働中' : '停止中';
 }
 
 function renderReports() {
@@ -142,33 +138,32 @@ function renderReports() {
 
 
         return `
-      <div class="report-item ${isWatched ? 'highlight' : ''}" data-doc-id="${report.doc_id}">
-        <div class="report-icon">${getReportIcon(report.report_type)}</div>
-        <div class="report-content">
-          <div class="report-header">
-            <span class="report-filer">${escapeHtml(report.filer_name)}</span>
-            <span class="report-type ${typeClass}">${escapeHtml(report.report_type || '大量保有報告書')}</span>
-          </div>
-          <div class="report-main">
-            <div class="report-description">${escapeHtml(report.doc_description || '')}</div>
-            <div class="report-details" id="details-${report.doc_id}" data-doc-id="${report.doc_id}">
-              <div class="details-loading">📊 詳細を読み込み中...</div>
+      <div class="report-item ${isWatched ? 'watched' : ''}" data-doc-id="${report.doc_id}">
+        <div class="report-main-info">
+          <div class="report-header-row">
+            <div class="report-filer-section">
+              ${isWatched ? '<span class="watch-star">⭐</span>' : ''}
+              <span class="report-filer">${escapeHtml(report.filer_name)}</span>
+              <span class="report-type ${typeClass}">${escapeHtml(report.report_type || '大量保有報告書')}</span>
+            </div>
+            <div class="report-meta-inline">
+              <span class="meta-item">📅 ${formatDateTime(report.submit_date_time)}</span>
+              ${report.sec_code ? `<span class="meta-item">🏷️ ${report.sec_code}</span>` : ''}
             </div>
           </div>
-          <div class="report-meta">
-            <span>📅 ${formatDateTime(report.submit_date_time)}</span>
-            ${report.sec_code ? `<span>🏷️ ${report.sec_code}</span>` : ''}
-          </div>
+          <div class="report-description-row">${escapeHtml(report.doc_description || '')}</div>
         </div>
-        <div class="report-actions">
+        <div class="report-details-compact" id="details-${report.doc_id}" data-doc-id="${report.doc_id}">
+          <div class="details-loading-sm">📊</div>
+        </div>
+        <div class="report-actions-compact">
           ${report.pdf_flag ? `
-            <a href="/api/document/${report.doc_id}" 
-               target="_blank" 
-               class="report-action" 
-               title="PDFを開く">📄</a>
+            <button class="action-btn action-pdf" data-doc-id="${report.doc_id}" title="PDFを開く">
+              📥
+            </button>
           ` : ''}
-          <button class="btn-add-watch" title="監視対象に追加" data-name="${escapeHtml(report.filer_name)}">
-            ${escapeHtml(report.filer_name)}を監視対象とする
+          <button class="action-btn action-watch ${isWatched ? 'watched' : ''}" data-name="${escapeHtml(report.filer_name)}" title="${isWatched ? '監視中' : '監視対象に追加'}">
+            ${isWatched ? '⭐' : '☆'}
           </button>
         </div>
       </div>
@@ -176,7 +171,8 @@ function renderReports() {
     }).join('');
 
     // イベント登録
-    elements.reportsList.querySelectorAll('.btn-add-watch').forEach(btn => {
+    // 監視ボタン
+    elements.reportsList.querySelectorAll('.action-watch').forEach(btn => {
         btn.addEventListener('click', async (e) => {
             e.stopPropagation();
             const name = btn.dataset.name;
@@ -186,8 +182,17 @@ function renderReports() {
         });
     });
 
+    // PDFボタン
+    elements.reportsList.querySelectorAll('.action-pdf').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const docId = btn.dataset.docId;
+            window.open(`/api/document/${docId}`, '_blank');
+        });
+    });
+
     // 詳細を自動で読み込み
-    elements.reportsList.querySelectorAll('.report-details').forEach(async (detailsDiv) => {
+    elements.reportsList.querySelectorAll('.report-details-compact').forEach(async (detailsDiv) => {
         const docId = detailsDiv.dataset.docId;
         if (!docId) return;
 
@@ -439,8 +444,50 @@ function setupEventListeners() {
     // 更新ボタン
     elements.refreshBtn.addEventListener('click', refreshAll);
 
+    // クイックフィルター
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // アクティブ状態を切り替え
+            document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const range = btn.dataset.range;
+            const today = new Date();
+            let startDate = '';
+            let endDate = '';
+
+            switch (range) {
+                case 'today':
+                    startDate = endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'week':
+                    const weekAgo = new Date(today);
+                    weekAgo.setDate(today.getDate() - 7);
+                    startDate = weekAgo.toISOString().split('T')[0];
+                    endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    const monthAgo = new Date(today);
+                    monthAgo.setMonth(today.getMonth() - 1);
+                    startDate = monthAgo.toISOString().split('T')[0];
+                    endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'all':
+                default:
+                    startDate = endDate = '';
+                    break;
+            }
+
+            elements.dateFilterStart.value = startDate;
+            elements.dateFilterEnd.value = endDate;
+            state.filters.dateStart = startDate;
+            state.filters.dateEnd = endDate;
+            renderReports();
+        });
+    });
+
     // 監視設定モーダル
-    elements.notifyBtn.addEventListener('click', () => {
+    elements.watchlistModalBtn.addEventListener('click', () => {
         elements.watchlistModal.classList.add('active');
     });
 
