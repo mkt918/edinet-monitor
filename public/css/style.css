@@ -1049,13 +1049,13 @@ body {
 
   /* PDF Text Button */
   .action-pdf-text {
-    background: transparent;
+    background: var(--color-primary);
     width: auto;
     height: auto;
-    padding: 0.2rem 0.5rem;
-    border: 1px solid var(--color-border);
+    padding: 0.2rem 0.6rem;
+    border: none;
     border-radius: 4px;
-    color: var(--color-text-muted);
+    color: white !important;
     font-size: 0.75rem;
     display: inline-flex;
     align-items: center;
@@ -1067,7 +1067,35 @@ body {
   }
 
   .action-pdf-text:hover {
-    background: var(--color-bg-light);
-    color: var(--color-primary);
-    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+  }
+
+  /* 詳細情報の星アイコン */
+  .btn-add-issuer-watch {
+    background: transparent;
+    border: 1px solid transparent;
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0;
+    transform: scale(0.8);
+    /* サイズ80% */
+  }
+
+  .btn-add-issuer-watch:hover {
+    transform: scale(1.0);
+    /* ホバー時は少し大きく */
+    color: var(--color-warning);
+  }
+
+  .btn-add-issuer-watch.watched {
+    color: var(--color-warning);
   }

@@ -137,8 +137,20 @@ async function fetchIssuerDocuments(edinetCode) {
     }
 }
 
+async function fetchFilerDocuments(edinetCode) {
+    try {
+        const response = await fetch(`${API_BASE}/api/filer/${edinetCode}/documents`);
+        const data = await response.json();
+        return data.success ? data.data : [];
+    } catch (e) {
+        console.error('Error fetching filer documents:', e);
+        return [];
+    }
+}
+
 function renderReports() {
     const filtered = filterReports();
+    const filterText = state.filters.search || '';
 
     if (filtered.length === 0) {
         elements.reportsList.innerHTML = `
@@ -164,8 +176,13 @@ function renderReports() {
           <div class="report-header-row">
             <div class="report-filer-section">
               ${isWatched ? '<span class="watch-star">⭐</span>' : ''}
-              <span class="report-filer">${escapeHtml(report.filer_name)}</span>
-              <a href="https://www.google.com/search?q=${encodeURIComponent(report.filer_name)}" target="_blank" class="btn-google-search" title="${escapeHtml(report.filer_name)}をGoogle検索" onclick="event.stopPropagation()">🔍</a>
+              <a href="#" class="report-filer issuer-link" 
+                 data-edinet-code="${escapeHtml(report.edinet_code)}" 
+                 data-issuer-name="${escapeHtml(report.filer_name)}"
+                 data-type="filer" 
+                 onclick="event.stopPropagation()">
+                 ${highlightMatch(report.filer_name, filterText)}
+              </a>
               <button class="action-btn action-watch ${isWatched ? 'watched' : ''} btn-filer-favorite" data-name="${escapeHtml(report.filer_name)}" title="${isWatched ? 'お気に入り' : 'お気に入りに追加'}" onclick="event.stopPropagation()">
                 ${isWatched ? '⭐' : '☆'}
               </button>
@@ -204,12 +221,28 @@ function renderReports() {
         });
     });
 
-    // PDFボタン
     elements.reportsList.querySelectorAll('.action-pdf').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const docId = btn.dataset.docId;
             window.open(`/api/document/${docId}`, '_blank');
+        });
+    });
+
+    // 変更報告者リンク（リストヘッダー内）
+    elements.reportsList.querySelectorAll('.report-header-row .issuer-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const edinetCode = link.dataset.edinetCode;
+            const issuerName = link.dataset.issuerName;
+            const type = link.dataset.type || 'filer';
+
+            if (edinetCode) {
+                openDashboardV2(edinetCode, issuerName, null, type);
+            } else {
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(issuerName)}`, '_blank');
+            }
         });
     });
 
@@ -254,11 +287,12 @@ function renderReports() {
                     const edinetCode = issuerLink.dataset.edinetCode;
                     const issuerName = issuerLink.dataset.issuerName;
                     const secCode = issuerLink.dataset.secCode;
+                    const type = issuerLink.dataset.type || 'issuer';
+
                     if (edinetCode) {
-                        openDashboard(edinetCode, issuerName, secCode);
+                        openDashboardV2(edinetCode, issuerName, secCode, type);
                     } else {
-                        // EDINETコードがない場合はGoogle検索へフォールバック（既存のhref）
-                        window.open(issuerLink.href, '_blank');
+                        window.open(`https://www.google.com/search?q=${encodeURIComponent(issuerName)}`, '_blank');
                     }
                 });
             }
@@ -331,7 +365,9 @@ function filterReports() {
 
         // 定款変更のみフィルター
         if (state.filters.articlesOnly) {
-            if (!report.report_type?.includes('定款')) {
+            const hasTeikanInType = report.report_type?.includes('定款');
+            const hasTeikanInDesc = report.doc_description?.includes('定款');
+            if (!hasTeikanInType && !hasTeikanInDesc) {
                 return false;
             }
         }
@@ -365,6 +401,7 @@ function renderDetailsContent(details) {
                        data-edinet-code="${details.issuerEdinetCode || ''}"
                        data-issuer-name="${escapeHtml(details.issuerName)}"
                        data-sec-code="${escapeHtml(details.securityCode || '')}"
+                       data-type="issuer"
                        onclick="event.stopPropagation()">
                        ${escapeHtml(details.issuerName || '-')}
                     </a>
@@ -440,13 +477,22 @@ function formatDateTime(dt) {
     }
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
+return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function highlightMatch(text, query) {
+    if (!text) return '';
+    if (!query) return escapeHtml(text);
+
+    // 単純な実装: クエリが含まれていれば太字にするなど
+    // ここでは単純に文字列を返すだけにします（HTMLエスケープ済み）
+    // 本来はマッチ箇所をspanで囲むなどの処理が必要ですが、
+    // バグ修正優先のため、まずは正常動作させる実装にします。
+    return escapeHtml(text);
 }
 
 // ===== Data Loading =====
@@ -647,7 +693,47 @@ async function requestNotificationPermission() {
 
 // ===== Dashboard Functions =====
 
-async function openDashboard(edinetCode, issuerName, secCode) {
+async function openDashboardV2(edinetCode, issuerName, secCode, type = 'issuer') {
+    elements.dashboardTitle.textContent = `${issuerName} の企業ダッシュボード`;
+    elements.dashboardModal.classList.add('active');
+
+    // 外部リンク設定
+    let linksHtml = '';
+
+    // Google検索ボタン
+    linksHtml += `<a href="https://www.google.com/search?q=${encodeURIComponent(issuerName)}" target="_blank" class="dashboard-link-btn">Google検索</a>`;
+
+    if (type === 'issuer') {
+        const code = secCode ? secCode.substring(0, 4) : null;
+        if (code) {
+            linksHtml += `<a href="https://finance.yahoo.co.jp/quote/${code}.T" target="_blank" class="dashboard-link-btn">Yahoo!ファイナンス</a>`;
+            linksHtml += `<a href="https://irbank.net/${code}" target="_blank" class="dashboard-link-btn">IR BANK</a>`;
+            linksHtml += `<a href="https://www.buffett-code.com/company/${code}/" target="_blank" class="dashboard-link-btn">バフェット・コード</a>`;
+        }
+    }
+
+    // 既存のリンクコンテナの中身を書き換え
+    const linksContainer = elements.dashboardModal.querySelector('.dashboard-links');
+    if (linksContainer) {
+        linksContainer.innerHTML = linksHtml;
+    }
+
+    // APIからデータ取得
+    elements.dashboardDocsList.innerHTML = '<div class="loading">読み込み中...</div>';
+
+    let docs = [];
+    if (type === 'issuer') {
+        docs = await fetchIssuerDocuments(edinetCode);
+    } else {
+        docs = await fetchFilerDocuments(edinetCode);
+    }
+    renderDashboardDocs(docs);
+}
+
+// 古い関数は使用しない
+// async function openDashboard...
+
+async function openDashboard(edinetCode, issuerName, secCode, type = 'issuer') {
     elements.dashboardTitle.textContent = `${issuerName} の企業ダッシュボード`;
     elements.dashboardModal.classList.add('active');
 

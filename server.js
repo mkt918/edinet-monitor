@@ -310,6 +310,21 @@ app.get('/api/issuer/:edinetCode/documents', async (req, res) => {
     }
 });
 
+/**
+ * 特定の提出者の提出書類一覧を取得（ダッシュボード用）
+ * GET /api/filer/:edinetCode/documents
+ */
+app.get('/api/filer/:edinetCode/documents', async (req, res) => {
+    try {
+        const { edinetCode } = req.params;
+        const documents = await database.getReportsByFiler(edinetCode, 50); // 最新50件
+        res.json({ success: true, data: documents });
+    } catch (error) {
+        console.error('Error fetching filer documents:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // ===== Server Start =====
 
 async function startServer() {

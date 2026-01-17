@@ -160,6 +160,35 @@ class DatabaseService {
     }
 
     /**
+     * 提出者のEDINETコードに関連する報告書を取得
+     * @param {string} edinetCode - 提出者のEDINETコード
+     * @param {number} limit - 取得件数
+     * @returns {Array} 報告書一覧
+     */
+    async getReportsByFiler(edinetCode, limit = 20) {
+        if (!edinetCode) return [];
+
+        try {
+            const { data, error } = await this.supabase
+                .from('reports')
+                .select('*')
+                .eq('edinet_code', edinetCode)
+                .order('submit_date_time', { ascending: false })
+                .limit(limit);
+
+            if (error) {
+                console.error('Error fetching filer reports:', error);
+                return [];
+            }
+
+            return data || [];
+        } catch (e) {
+            console.error('Error in getReportsByFiler:', e);
+            return [];
+        }
+    }
+
+    /**
      * 報告書一覧を取得
      * @param {Object} options - 検索オプション
      * @returns {Array} 報告書一覧
