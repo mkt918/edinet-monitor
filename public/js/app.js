@@ -9,6 +9,7 @@ let state = {
     reports: [],
     watchlist: [],
     stats: null,
+    detailsCache: {}, // docId -> details のキャッシュ
     filters: {
         date: '',
         search: '',
@@ -272,7 +273,16 @@ function renderReports() {
         const docId = detailsDiv.dataset.docId;
         if (!docId) return;
 
-        const details = await fetchReportDetails(docId);
+        // キャッシュをチェック
+        let details = state.detailsCache[docId];
+
+        // キャッシュになければAPIから取得
+        if (!details) {
+            details = await fetchReportDetails(docId);
+            if (details) {
+                state.detailsCache[docId] = details; // キャッシュに保存
+            }
+        }
 
         if (details) {
             detailsDiv.innerHTML = renderDetailsContent(details);

@@ -47,13 +47,26 @@ export const config = {
 };
 ```
 
-### 起動
+### ローカル開発環境での起動
 
 ```bash
 npm start
 ```
 
 ブラウザで <http://localhost:3000> にアクセスしてください。
+
+### DS224j(Synology NAS)でのデプロイ
+
+このアプリケーションはDS224jなどのSynology NAS上でDockerを使って公開できます。
+
+**クイックスタート**: [docs/QUICKSTART.md](./docs/QUICKSTART.md)
+
+**詳細ガイド**:
+
+1. [DS224jセットアップガイド](./docs/synology-setup.md) - Dockerのインストールとファイルアップロード
+2. [ネットワーク設定ガイド](./docs/network-setup.md) - ポートフォワーディングとDDNS設定
+3. [SSL証明書とドメイン設定ガイド](./docs/ssl-domain-setup.md) - HTTPS化
+4. [アクセス制限設定ガイド](./docs/access-control.md) - セキュリティ設定
 
 ## 使い方
 

@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+data/*.db
+temp
+test_doc
+*.md
+.vercelignore
+vercel.json
+npm-data
+npm-letsencrypt
