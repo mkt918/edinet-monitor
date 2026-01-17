@@ -21,8 +21,9 @@ class Scheduler {
     start(onNewReports = null) {
         this.onNewReports = onNewReports;
 
-        // 30分ごとに実行（0分と30分）
-        const cronExpression = `*/${config.pollIntervalMinutes} * * * *`;
+        // 30分ごとに実行（平日 8:00 - 20:59）
+        // 土日・夜間は実行しない
+        const cronExpression = `*/${config.pollIntervalMinutes} 8-20 * * 1-5`;
 
         this.job = cron.schedule(cronExpression, async () => {
             await this.checkForNewReports();

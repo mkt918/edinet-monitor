@@ -193,9 +193,7 @@ class DatabaseService {
      * @param {Object} options - 検索オプション
      * @returns {Array} 報告書一覧
      */
-    async getReports(options = {}) {
-        const { limit = 100, offset = 0, date, filerName, search } = options;
-
+    async getReports({ date, startDate, endDate, search, filerName, limit = 100, offset = 0 } = {}) {
         try {
             let query = this.supabase
                 .from('reports')
@@ -204,6 +202,12 @@ class DatabaseService {
 
             if (date) {
                 query = query.ilike('submit_date_time', `${date}%`);
+            }
+            if (startDate) {
+                query = query.gte('submit_date_time', `${startDate}T00:00:00`);
+            }
+            if (endDate) {
+                query = query.lte('submit_date_time', `${endDate}T23:59:59`);
             }
 
             if (filerName) {

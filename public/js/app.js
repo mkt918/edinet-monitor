@@ -14,7 +14,14 @@ let state = {
         search: '',
         type: '',
         watchedOnly: false,
-        articlesOnly: false
+        articlesOnly: false,
+        dateStart: '',
+        dateEnd: ''
+    },
+    pagination: {
+        limit: 100,
+        offset: 0,
+        hasMore: false
     }
 };
 
@@ -39,6 +46,9 @@ const elements = {
     watchlistItems: document.getElementById('watchlistItems'),
     watchlistInput: document.getElementById('watchlistInput'),
     addWatchlistBtn: document.getElementById('addWatchlistBtn'),
+    // ページネーション
+    loadMoreContainer: document.getElementById('loadMoreContainer'),
+    loadMoreBtn: document.getElementById('loadMoreBtn'),
     dashboardModal: document.getElementById('dashboardModal'),
     closeDashboardModal: document.getElementById('closeDashboardModal'),
     dashboardTitle: document.getElementById('dashboardTitle'),
@@ -52,7 +62,18 @@ const elements = {
 async function fetchReports(options = {}) {
     const params = new URLSearchParams();
     if (options.date) params.append('date', options.date);
+    if (options.startDate) params.append('startDate', options.startDate);
+    if (options.endDate) params.append('endDate', options.endDate);
     if (options.search) params.append('search', options.search);
+
+    // ページネーション
+    if (options.limit) params.append('limit', options.limit);
+    if (options.offset) params.append('offset', options.offset);
+
+    // limit未指定かつ日付指定がある場合はデフォルトを増やす（バックアップ）
+    if (!options.limit && (options.startDate || options.endDate)) {
+        params.append('limit', '500');
+    }
 
     const response = await fetch(`${API_BASE}/api/reports?${params}`);
     const data = await response.json();
@@ -295,11 +316,21 @@ function renderReports() {
                         window.open(`https://www.google.com/search?q=${encodeURIComponent(issuerName)}`, '_blank');
                     }
                 });
+
             }
         } else {
             detailsDiv.innerHTML = '<div class="details-error">詳細情報を取得できませんでした</div>';
         }
     });
+
+    // もっと見るボタンの表示制御
+    if (elements.loadMoreContainer) {
+        if (state.pagination.hasMore) {
+            elements.loadMoreContainer.style.display = 'block';
+        } else {
+            elements.loadMoreContainer.style.display = 'none';
+        }
+    }
 }
 
 function renderWatchlist() {
@@ -466,6 +497,12 @@ function formatDateTime(dt) {
     if (!dt) return '-';
     try {
         const date = new Date(dt);
+
+        // DBにはJSTの時刻がUTCとして保存されているため（例: 17:12 JST -> 17:12 UTC）、
+        // 表示時にJSTに変換されると+9時間されてしまう（17:12 UTC -> 02:12 JST）。
+        // そのため、ここで9時間引いて元のJST時刻に戻す。
+        date.setHours(date.getHours() - 9);
+
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
@@ -506,8 +543,57 @@ async function loadStats() {
 
 async function loadReports() {
     elements.reportsList.innerHTML = '<div class="loading">読み込み中...</div>';
-    state.reports = await fetchReports();
+
+    // リセット
+    state.pagination.offset = 0;
+    state.pagination.hasMore = false;
+
+    const limit = state.pagination.limit;
+
+    // 現在のフィルター条件でAPIから取得
+    const reports = await fetchReports({
+        startDate: state.filters.dateStart,
+        endDate: state.filters.dateEnd,
+        search: state.filters.search,
+        limit: limit,
+        offset: 0
+    });
+
+    state.reports = reports;
+    state.pagination.hasMore = reports.length >= limit;
+
     renderReports();
+}
+
+async function loadMoreReports() {
+    elements.loadMoreBtn.disabled = true;
+    elements.loadMoreBtn.textContent = '読み込み中...';
+
+    try {
+        state.pagination.offset += state.pagination.limit;
+
+        const newReports = await fetchReports({
+            startDate: state.filters.dateStart,
+            endDate: state.filters.dateEnd,
+            search: state.filters.search,
+            limit: state.pagination.limit,
+            offset: state.pagination.offset
+        });
+
+        if (newReports.length > 0) {
+            state.reports = [...state.reports, ...newReports];
+            state.pagination.hasMore = newReports.length >= state.pagination.limit;
+        } else {
+            state.pagination.hasMore = false;
+        }
+
+    } catch (e) {
+        console.error('Error loading more reports:', e);
+    } finally {
+        elements.loadMoreBtn.disabled = false;
+        elements.loadMoreBtn.textContent = 'もっと見る';
+        renderReports();
+    }
 }
 
 async function loadWatchlist() {
@@ -535,18 +621,18 @@ function setupEventListeners() {
     // 日付範囲フィルター
     elements.dateFilterStart.addEventListener('change', (e) => {
         state.filters.dateStart = e.target.value;
-        renderReports();
+        loadReports(); // API再取得
     });
 
     elements.dateFilterEnd.addEventListener('change', (e) => {
         state.filters.dateEnd = e.target.value;
-        renderReports();
+        loadReports(); // API再取得
     });
 
     elements.searchFilter.addEventListener('input', debounce((e) => {
         state.filters.search = e.target.value;
-        renderReports();
-    }, 300));
+        loadReports(); // API再取得
+    }, 500));
 
     elements.typeFilter.addEventListener('change', (e) => {
         state.filters.type = e.target.value;
@@ -625,7 +711,7 @@ function setupEventListeners() {
             elements.dateFilterEnd.value = endDate;
             state.filters.dateStart = startDate;
             state.filters.dateEnd = endDate;
-            renderReports();
+            loadReports(); // API再取得
         });
     });
 
@@ -674,6 +760,11 @@ function setupEventListeners() {
             elements.addWatchlistBtn.click();
         }
     });
+
+    // もっと見るボタン
+    if (elements.loadMoreBtn) {
+        elements.loadMoreBtn.addEventListener('click', loadMoreReports);
+    }
 }
 
 function debounce(fn, delay) {
