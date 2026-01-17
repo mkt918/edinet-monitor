@@ -702,6 +702,17 @@ body {
   color: var(--color-danger);
 }
 
+.detail-value {
+  font-size: 0.9rem;
+  /* 変更報告者と同じサイズ */
+}
+
+.detail-value.purpose {
+  font-size: 90%;
+  /* さらに10%小さく */
+  color: var(--color-text-muted);
+}
+
 .detail-value.change {
   font-weight: 700;
   font-size: 0.85rem;
@@ -798,8 +809,11 @@ body {
   }
 
   .filter-group {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    /* 横並びに戻す */
+    flex-wrap: wrap;
+    /* 折り返し有効 */
+    align-items: center;
   }
 
   .filter-input,
@@ -1047,7 +1061,8 @@ body {
   }
 
   .detail-value {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    /* 0.85rem -> 0.9rem に統一 */
   }
 
   /* PDF Text Button */
