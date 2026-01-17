@@ -245,20 +245,44 @@ app.get('/api/reports/:docId/details', async (req, res) => {
         console.log(`Fetching details for ${docId}...`);
         const details = await CsvParser.fetchAndParse(docId);
 
-        if (!details) {
-            return res.status(404).json({
-                success: false,
-                error: 'Could not parse document details'
-            });
+        // データベースからも情報を取得してマージ
+        const dbReport = await database.getReport(docId);
+
+        // 保有割合をフォーマット（詳細が取得できた場合）
+        let formattedDetails = {};
+
+        if (details) {
+            formattedDetails = {
+                ...details,
+                holdingRatioFormatted: CsvParser.formatRatioAsPercent(details.holdingRatio),
+                previousHoldingRatioFormatted: CsvParser.formatRatioAsPercent(details.previousHoldingRatio),
+                holdingRatioChangeFormatted: CsvParser.formatRatioChange(details.holdingRatioChange)
+            };
         }
 
-        // 保有割合をフォーマット
-        const formattedDetails = {
-            ...details,
-            holdingRatioFormatted: CsvParser.formatRatioAsPercent(details.holdingRatio),
-            previousHoldingRatioFormatted: CsvParser.formatRatioAsPercent(details.previousHoldingRatio),
-            holdingRatioChangeFormatted: CsvParser.formatRatioChange(details.holdingRatioChange)
-        };
+        // DB情報があれば補完
+        if (dbReport) {
+            if (!formattedDetails.issuerName && dbReport.filer_name) {
+                formattedDetails.issuerName = dbReport.filer_name; // 大量保有以外の場合など
+            }
+
+            // EDINETコード系を追加（ダッシュボード用）
+            formattedDetails.issuerEdinetCode = dbReport.issuer_edinet_code || dbReport.edinet_code;
+            formattedDetails.subjectEdinetCode = dbReport.subject_edinet_code;
+            formattedDetails.docId = dbReport.doc_id;
+
+            // CSVパース失敗時のバックアップ
+            if (!formattedDetails.filerName) formattedDetails.filerName = dbReport.filer_name;
+            if (!formattedDetails.submitDateTime) formattedDetails.submitDateTime = dbReport.submit_date_time;
+            if (!formattedDetails.securityCode) formattedDetails.securityCode = dbReport.sec_code;
+        }
+
+        if (!details && !dbReport) {
+            return res.status(404).json({
+                success: false,
+                error: 'Could not parse document details nor find in DB'
+            });
+        }
 
         res.json({
             success: true,
@@ -267,6 +291,21 @@ app.get('/api/reports/:docId/details', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching report details:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+/**
+ * 特定の企業の提出書類一覧を取得（ダッシュボード用）
+ * GET /api/issuer/:edinetCode/documents
+ */
+app.get('/api/issuer/:edinetCode/documents', async (req, res) => {
+    try {
+        const { edinetCode } = req.params;
+        const documents = await database.getReportsByIssuer(edinetCode, 50); // 最新50件
+        res.json({ success: true, data: documents });
+    } catch (error) {
+        console.error('Error fetching issuer documents:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });

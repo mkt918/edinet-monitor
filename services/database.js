@@ -104,6 +104,62 @@ class DatabaseService {
     }
 
     /**
+     * 単一の報告書を取得
+     * @param {string} docId - 書類管理番号
+     * @returns {Object|null} 報告書データ
+     */
+    async getReport(docId) {
+        try {
+            const { data, error } = await this.supabase
+                .from('reports')
+                .select('*')
+                .eq('doc_id', docId)
+                .single();
+
+            if (error) {
+                // 見つからない場合はエラーではなくnullを返す
+                if (error.code === 'PGRST116') return null;
+                console.error('Error fetching report:', error);
+                return null;
+            }
+
+            return data;
+        } catch (e) {
+            console.error('Error in getReport:', e);
+            return null;
+        }
+    }
+
+    /**
+     * 発行者のEDINETコードに関連する報告書を取得
+     * @param {string} edinetCode - 発行者のEDINETコード
+     * @param {number} limit - 取得件数
+     * @returns {Array} 報告書一覧
+     */
+    async getReportsByIssuer(edinetCode, limit = 20) {
+        if (!edinetCode) return [];
+
+        try {
+            const { data, error } = await this.supabase
+                .from('reports')
+                .select('*')
+                .or(`issuer_edinet_code.eq.${edinetCode},subject_edinet_code.eq.${edinetCode}`)
+                .order('submit_date_time', { ascending: false })
+                .limit(limit);
+
+            if (error) {
+                console.error('Error fetching issuer reports:', error);
+                return [];
+            }
+
+            return data || [];
+        } catch (e) {
+            console.error('Error in getReportsByIssuer:', e);
+            return [];
+        }
+    }
+
+    /**
      * 報告書一覧を取得
      * @param {Object} options - 検索オプション
      * @returns {Array} 報告書一覧

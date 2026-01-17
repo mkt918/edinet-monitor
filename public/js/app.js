@@ -38,7 +38,13 @@ const elements = {
     closeModal: document.getElementById('closeModal'),
     watchlistItems: document.getElementById('watchlistItems'),
     watchlistInput: document.getElementById('watchlistInput'),
-    addWatchlistBtn: document.getElementById('addWatchlistBtn')
+    addWatchlistBtn: document.getElementById('addWatchlistBtn'),
+    dashboardModal: document.getElementById('dashboardModal'),
+    closeDashboardModal: document.getElementById('closeDashboardModal'),
+    dashboardTitle: document.getElementById('dashboardTitle'),
+    dashboardDocsList: document.getElementById('dashboardDocsList'),
+    linkGoogleFinance: document.getElementById('linkGoogleFinance'),
+    linkYahooFinance: document.getElementById('linkYahooFinance')
 };
 
 // ===== API Functions =====
@@ -120,6 +126,17 @@ function renderStats() {
     }
 }
 
+async function fetchIssuerDocuments(edinetCode) {
+    try {
+        const response = await fetch(`${API_BASE}/api/issuer/${edinetCode}/documents`);
+        const data = await response.json();
+        return data.success ? data.data : [];
+    } catch (e) {
+        console.error('Error fetching issuer documents:', e);
+        return [];
+    }
+}
+
 function renderReports() {
     const filtered = filterReports();
 
@@ -149,6 +166,9 @@ function renderReports() {
               ${isWatched ? '<span class="watch-star">⭐</span>' : ''}
               <span class="report-filer">${escapeHtml(report.filer_name)}</span>
               <a href="https://www.google.com/search?q=${encodeURIComponent(report.filer_name)}" target="_blank" class="btn-google-search" title="${escapeHtml(report.filer_name)}をGoogle検索" onclick="event.stopPropagation()">🔍</a>
+              <button class="action-btn action-watch ${isWatched ? 'watched' : ''} btn-filer-favorite" data-name="${escapeHtml(report.filer_name)}" title="${isWatched ? 'お気に入り' : 'お気に入りに追加'}" onclick="event.stopPropagation()">
+                ${isWatched ? '⭐' : '☆'}
+              </button>
               <span class="report-type ${typeClass}">${escapeHtml(report.report_type || '大量保有報告書')}</span>
             </div>
             <div class="report-meta-inline">
@@ -167,9 +187,6 @@ function renderReports() {
               📥
             </button>
           ` : ''}
-          <button class="action-btn action-watch ${isWatched ? 'watched' : ''}" data-name="${escapeHtml(report.filer_name)}" title="${isWatched ? '監視中' : '監視対象に追加'}">
-            ${isWatched ? '⭐' : '☆'}
-          </button>
         </div>
       </div>
     `;
@@ -215,7 +232,6 @@ function renderReports() {
                 }
             }
 
-            // 発行者追加ボタンのイベントハンドラー
             const addIssuerBtn = detailsDiv.querySelector('.btn-add-issuer-watch');
             if (addIssuerBtn) {
                 addIssuerBtn.addEventListener('click', async (e) => {
@@ -228,6 +244,23 @@ function renderReports() {
                     }
                 });
             }
+
+            // ダッシュボードリンク
+            const issuerLink = detailsDiv.querySelector('.issuer-link');
+            if (issuerLink) {
+                issuerLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const edinetCode = issuerLink.dataset.edinetCode;
+                    const issuerName = issuerLink.dataset.issuerName;
+                    if (edinetCode) {
+                        openDashboard(edinetCode, issuerName);
+                    } else {
+                        // EDINETコードがない場合はGoogle検索へフォールバック（既存のhref）
+                        window.open(issuerLink.href, '_blank');
+                    }
+                });
+            }
         } else {
             detailsDiv.innerHTML = '<div class="details-error">詳細情報を取得できませんでした</div>';
         }
@@ -236,7 +269,7 @@ function renderReports() {
 
 function renderWatchlist() {
     if (state.watchlist.length === 0) {
-        elements.watchlistItems.innerHTML = '<p class="empty-state-text">監視対象がありません</p>';
+        elements.watchlistItems.innerHTML = '<p class="empty-state-text">お気に入り登録がありません</p>';
         return;
     }
 
@@ -326,9 +359,15 @@ function renderDetailsContent(details) {
             <div class="details-group-basic">
                 <div class="detail-item-inline">
                     <span class="detail-label">📈 対象銘柄</span>
-                    <span class="detail-value">${escapeHtml(details.issuerName || '-')}</span>
+                    <a href="https://www.google.com/search?q=${encodeURIComponent(details.issuerName)}%20${encodeURIComponent('有価証券報告書')}" 
+                       class="detail-value issuer-link" 
+                       data-edinet-code="${details.issuerEdinetCode || ''}"
+                       data-issuer-name="${escapeHtml(details.issuerName)}"
+                       onclick="event.stopPropagation()">
+                       ${escapeHtml(details.issuerName || '-')}
+                    </a>
                     ${details.issuerName && !isIssuerWatched ? `
-                        <button class="btn-add-issuer-watch" data-issuer="${escapeHtml(details.issuerName)}" title="発行者を監視対象に追加">👁️</button>
+                        <button class="btn-add-issuer-watch" data-issuer="${escapeHtml(details.issuerName)}" title="発行者をお気に入りに追加">⭐</button>
                     ` : ''}
                 </div>
                 <div class="detail-item-inline">
@@ -545,11 +584,27 @@ function setupEventListeners() {
         elements.watchlistModal.classList.add('active');
     });
 
-    elements.closeModal.addEventListener('click', () => {
-        elements.watchlistModal.classList.remove('active');
-    });
+    if (elements.closeModal) {
+        elements.closeModal.addEventListener('click', () => {
+            elements.watchlistModal.classList.remove('active');
+        });
+    }
 
-    elements.watchlistModal.querySelector('.modal-overlay').addEventListener('click', () => {
+    if (elements.closeDashboardModal) {
+        elements.closeDashboardModal.addEventListener('click', () => {
+            elements.dashboardModal.classList.remove('active');
+        });
+    }
+
+    // Modal click outside
+    window.addEventListener('click', (e) => {
+        if (e.target === elements.watchlistModal) {
+            elements.watchlistModal.classList.remove('active');
+        }
+        if (e.target === elements.dashboardModal) {
+            elements.dashboardModal.classList.remove('active');
+        }
+    }); elements.watchlistModal.querySelector('.modal-overlay').addEventListener('click', () => {
         elements.watchlistModal.classList.remove('active');
     });
 
@@ -586,6 +641,46 @@ async function requestNotificationPermission() {
         const permission = await Notification.requestPermission();
         console.log('Notification permission:', permission);
     }
+}
+
+// ===== Dashboard Functions =====
+
+async function openDashboard(edinetCode, issuerName) {
+    elements.dashboardTitle.textContent = `${issuerName} の企業ダッシュボード`;
+    elements.dashboardModal.classList.add('active');
+
+    // 外部リンク設定
+    elements.linkGoogleFinance.href = `https://www.google.com/finance/quote/${edinetCode}:TYO`; // 仮
+    elements.linkYahooFinance.href = `https://finance.yahoo.co.jp/quote/${edinetCode}`; // 仮 - 実際は証券コードが必要
+
+    // APIからデータ取得
+    elements.dashboardDocsList.innerHTML = '<div class="loading">読み込み中...</div>';
+    const docs = await fetchIssuerDocuments(edinetCode);
+    renderDashboardDocs(docs);
+}
+
+function renderDashboardDocs(docs) {
+    if (!docs || docs.length === 0) {
+        elements.dashboardDocsList.innerHTML = '<div class="empty-state-text">書類が見つかりませんでした</div>';
+        return;
+    }
+
+    elements.dashboardDocsList.innerHTML = docs.map(doc => `
+        <div class="dashboard-doc-item">
+            <div class="doc-main">
+                <div class="doc-date">${formatDateTime(doc.submit_date_time)}</div>
+                <div class="doc-desc">${escapeHtml(doc.doc_description)}</div>
+                <div class="doc-type">${escapeHtml(doc.report_type || '報告書')}</div>
+            </div>
+            <div class="doc-actions">
+                ${doc.pdf_flag ? `
+                    <button class="action-btn action-pdf-sm" onclick="window.open('/api/document/${doc.doc_id}', '_blank')">
+                        PDF
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
 }
 
 // ===== Init =====

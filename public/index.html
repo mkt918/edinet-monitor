@@ -24,7 +24,7 @@
           <div class="header-stats">
             <span class="stat-item">📄 <strong id="todayCount">--</strong>件</span>
             <span class="stat-item">⏰ <strong id="lastUpdated">--:--</strong></span>
-            <span class="stat-item">⭐ <strong id="watchlistCount">--</strong>件監視中</span>
+            <span class="stat-item">⭐ <strong id="watchlistCount">--</strong>件お気に入り</span>
           </div>
         </div>
         <div class="header-actions">
@@ -34,7 +34,7 @@
           </button>
           <button id="watchlistModalBtn" class="btn btn-secondary btn-sm">
             <span class="btn-icon">⭐</span>
-            監視設定
+            お気に入り設定
           </button>
         </div>
       </div>
@@ -65,7 +65,7 @@
             </select>
             <label class="filter-checkbox">
               <input type="checkbox" id="watchedOnlyFilter">
-              <span>監視対象のみ</span>
+              <span>お気に入り</span>
             </label>
             <label class="filter-checkbox">
               <input type="checkbox" id="articlesOnlyFilter">
@@ -95,16 +95,38 @@
       <div class="modal-overlay"></div>
       <div class="modal-content">
         <div class="modal-header">
-          <h2>監視対象設定</h2>
+          <h2>お気に入り設定</h2>
           <button class="modal-close" id="closeModal">&times;</button>
         </div>
         <div class="modal-body">
           <div class="watchlist-form">
-            <input type="text" id="watchlistInput" class="filter-input" placeholder="監視対象の名前を入力...">
+            <input type="text" id="watchlistInput" class="filter-input" placeholder="名前を入力...">
             <button id="addWatchlistBtn" class="btn btn-primary">追加</button>
           </div>
           <div class="watchlist-items" id="watchlistItems">
-            <!-- 監視対象がここに表示される -->
+            <!-- お気に入りがここに表示される -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 企業ダッシュボードモーダル -->
+    <div class="modal" id="dashboardModal">
+      <div class="modal-overlay"></div>
+      <div class="modal-content dashboard-content">
+        <div class="modal-header">
+          <h2 id="dashboardTitle">企業ダッシュボード</h2>
+          <button class="modal-close" id="closeDashboardModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="dashboard-links">
+            <a href="#" id="linkGoogleFinance" target="_blank" class="dashboard-link-btn">Google Finance</a>
+            <a href="#" id="linkYahooFinance" target="_blank" class="dashboard-link-btn">Yahoo!ファイナンス</a>
+          </div>
+
+          <h3 class="dashboard-section-title">直近の提出書類</h3>
+          <div class="dashboard-docs-list" id="dashboardDocsList">
+            <div class="loading">読み込み中...</div>
           </div>
         </div>
       </div>
