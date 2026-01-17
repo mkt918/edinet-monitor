@@ -386,8 +386,11 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  flex: 1;
+  flex: 0 1 auto;
+  /* 余白まで広げない */
   min-width: 0;
+  margin-right: 0.5rem;
+  /* 右側に少し余白 */
 }
 
 .btn-google-search {
