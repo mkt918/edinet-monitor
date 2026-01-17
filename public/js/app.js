@@ -183,8 +183,8 @@ function renderReports() {
         </div>
         <div class="report-actions-compact">
           ${report.pdf_flag ? `
-            <button class="action-btn action-pdf" data-doc-id="${report.doc_id}" title="PDFを開く">
-              📥
+            <button class="action-btn action-pdf-text" data-doc-id="${report.doc_id}" title="PDFを開く">
+              PDF
             </button>
           ` : ''}
         </div>
@@ -253,8 +253,9 @@ function renderReports() {
                     e.stopPropagation();
                     const edinetCode = issuerLink.dataset.edinetCode;
                     const issuerName = issuerLink.dataset.issuerName;
+                    const secCode = issuerLink.dataset.secCode;
                     if (edinetCode) {
-                        openDashboard(edinetCode, issuerName);
+                        openDashboard(edinetCode, issuerName, secCode);
                     } else {
                         // EDINETコードがない場合はGoogle検索へフォールバック（既存のhref）
                         window.open(issuerLink.href, '_blank');
@@ -363,6 +364,7 @@ function renderDetailsContent(details) {
                        class="detail-value issuer-link" 
                        data-edinet-code="${details.issuerEdinetCode || ''}"
                        data-issuer-name="${escapeHtml(details.issuerName)}"
+                       data-sec-code="${escapeHtml(details.securityCode || '')}"
                        onclick="event.stopPropagation()">
                        ${escapeHtml(details.issuerName || '-')}
                     </a>
@@ -645,13 +647,28 @@ async function requestNotificationPermission() {
 
 // ===== Dashboard Functions =====
 
-async function openDashboard(edinetCode, issuerName) {
+async function openDashboard(edinetCode, issuerName, secCode) {
     elements.dashboardTitle.textContent = `${issuerName} の企業ダッシュボード`;
     elements.dashboardModal.classList.add('active');
 
     // 外部リンク設定
-    elements.linkGoogleFinance.href = `https://www.google.com/finance/quote/${edinetCode}:TYO`; // 仮
-    elements.linkYahooFinance.href = `https://finance.yahoo.co.jp/quote/${edinetCode}`; // 仮 - 実際は証券コードが必要
+    // 証券コードがある場合のみリンクを有効化、なければ非表示にするか無効化
+    const code = secCode ? secCode.substring(0, 4) : null;
+
+    let linksHtml = '';
+    if (code) {
+        linksHtml += `<a href="https://finance.yahoo.co.jp/quote/${code}.T" target="_blank" class="dashboard-link-btn">Yahoo!ファイナンス</a>`;
+        linksHtml += `<a href="https://irbank.net/${code}" target="_blank" class="dashboard-link-btn">IR BANK</a>`;
+        linksHtml += `<a href="https://www.buffett-code.com/company/${code}/" target="_blank" class="dashboard-link-btn">バフェット・コード</a>`;
+    } else {
+        linksHtml = '<span class="text-muted">証券コード情報なし</span>';
+    }
+
+    // 既存のリンクコンテナの中身を書き換え
+    const linksContainer = elements.dashboardModal.querySelector('.dashboard-links');
+    if (linksContainer) {
+        linksContainer.innerHTML = linksHtml;
+    }
 
     // APIからデータ取得
     elements.dashboardDocsList.innerHTML = '<div class="loading">読み込み中...</div>';

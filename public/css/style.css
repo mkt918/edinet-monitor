@@ -209,6 +209,10 @@ body {
   color: var(--color-text);
 }
 
+
+
+
+
 .quick-filter-btn.active {
   background: var(--color-primary);
   border-color: var(--color-primary);
@@ -1042,4 +1046,28 @@ body {
   .detail-value {
     font-size: 0.85rem;
   }
-}
+
+  /* PDF Text Button */
+  .action-pdf-text {
+    background: transparent;
+    width: auto;
+    height: auto;
+    padding: 0.2rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: var(--transition);
+    margin-left: auto;
+    /* 右寄せ */
+  }
+
+  .action-pdf-text:hover {
+    background: var(--color-bg-light);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
