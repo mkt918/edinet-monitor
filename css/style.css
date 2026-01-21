@@ -1,0 +1,850 @@
+/* ============================================
+   有価証券報告書ダッシュボード - スタイル
+   テーマ: ライトモード・ミニマル
+   ============================================ */
+
+/* リセットと基本設定 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* カラーパレット */
+    --primary: #2563eb;
+    --primary-light: #3b82f6;
+    --primary-dark: #1d4ed8;
+    --secondary: #64748b;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+
+    /* 背景色 */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+
+    /* テキスト色 */
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+
+    /* ボーダー */
+    --border-color: #e2e8f0;
+    --border-radius: 12px;
+    --border-radius-sm: 8px;
+
+    /* シャドウ */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+    /* 土地・建物カラー */
+    --land-color: #10b981;
+    --building-color: #8b5cf6;
+
+    /* スペーシング */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+}
+
+body {
+    font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+/* コンテナ */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+}
+
+/* ============================================
+   企業タブバー
+   ============================================ */
+.company-tabs-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    background: var(--bg-primary);
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    padding: var(--spacing-sm) var(--spacing-sm) 0 var(--spacing-sm);
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+}
+
+.company-tabs {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    flex: 1;
+    scrollbar-width: thin;
+}
+
+.company-tabs::-webkit-scrollbar {
+    height: 4px;
+}
+
+.company-tabs::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.company-tabs::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.company-tab {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: all 0.2s;
+    position: relative;
+    min-width: 120px;
+    max-width: 200px;
+}
+
+.company-tab:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.company-tab.active {
+    background: var(--bg-primary);
+    color: var(--primary);
+    border-color: var(--border-color);
+    font-weight: 500;
+    margin-bottom: -1px;
+    padding-bottom: calc(var(--spacing-sm) + 1px);
+}
+
+.company-tab .tab-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+}
+
+.company-tab .tab-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    font-size: 14px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+}
+
+.company-tab .tab-close:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.company-tab.active .tab-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.tab-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--border-radius-sm);
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    font-size: 18px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-bottom: var(--spacing-sm);
+}
+
+.tab-add-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    border-style: solid;
+    color: white;
+}
+
+/* ヘッダー調整（タブと連結） */
+.company-header {
+    background: var(--bg-primary);
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    margin-top: -16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    border-top: none;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+}
+
+.company-info {
+    flex: 1;
+}
+
+.company-info h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+}
+
+.company-meta {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stock-info {
+    display: flex;
+    gap: var(--spacing-xl);
+}
+
+.stock-price,
+.market-cap {
+    text-align: right;
+}
+
+.stock-info .label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stock-info .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stock-info .unit {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-left: var(--spacing-xs);
+}
+
+/* ============================================
+   モーダルダイアログ
+   ============================================ */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 0;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: var(--spacing-lg);
+    flex: 1;
+    overflow-y: auto;
+}
+
+.modal-hint {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+
+#json-input {
+    width: 100%;
+    height: 300px;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    resize: vertical;
+    background: var(--bg-secondary);
+}
+
+#json-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.import-error {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--danger);
+    border-radius: var(--border-radius-sm);
+    color: var(--danger);
+    font-size: 13px;
+    display: none;
+}
+
+.import-error.visible {
+    display: block;
+}
+
+.modal-footer {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+}
+
+.btn {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--bg-tertiary);
+}
+
+.company-info {
+    flex: 1;
+}
+
+.company-info h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: var(--spacing-sm);
+}
+
+.company-meta {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.stock-info {
+    display: flex;
+    gap: var(--spacing-xl);
+}
+
+.stock-price,
+.market-cap {
+    text-align: right;
+}
+
+.stock-info .label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.stock-info .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stock-info .unit {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-left: var(--spacing-xs);
+}
+
+/* ============================================
+   セクション共通
+   ============================================ */
+section {
+    background: var(--bg-primary);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-lg);
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+.section-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* ============================================
+   地図セクション
+   ============================================ */
+#map {
+    height: 450px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--border-color);
+}
+
+.map-legend {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.legend-item {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.legend-item.land {
+    color: var(--land-color);
+}
+
+.legend-item.building {
+    color: var(--building-color);
+}
+
+/* Leafletポップアップのカスタマイズ */
+.leaflet-popup-content-wrapper {
+    border-radius: var(--border-radius-sm);
+}
+
+.leaflet-popup-content {
+    margin: 12px 16px;
+}
+
+.popup-content h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.popup-content p {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.popup-content .value {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* ============================================
+   投資指標セクション
+   ============================================ */
+.indicators-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.indicator-card {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+}
+
+.indicator-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.indicator-card .indicator-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-sm);
+}
+
+.indicator-card .indicator-name {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.indicator-card .indicator-icon {
+    font-size: 16px;
+}
+
+.indicator-card .indicator-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.indicator-card .indicator-unit {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.indicator-card .indicator-description {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-color);
+    margin-top: var(--spacing-sm);
+}
+
+.indicator-card .indicator-special {
+    font-size: 12px;
+    font-weight: 600;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    background: var(--bg-tertiary);
+    margin-bottom: var(--spacing-sm);
+    text-align: center;
+}
+
+.indicator-card.positive .indicator-special {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+}
+
+.indicator-card.negative .indicator-special {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--danger);
+}
+
+.indicator-card.neutral .indicator-special {
+    background: rgba(37, 99, 235, 0.15);
+    color: var(--primary);
+}
+
+/* 指標カードのカラーバリエーション */
+.indicator-card.positive .indicator-value {
+    color: var(--success);
+}
+
+.indicator-card.negative .indicator-value {
+    color: var(--danger);
+}
+
+.indicator-card.neutral .indicator-value {
+    color: var(--primary);
+}
+
+/* グラフコンテナ */
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.chart-wrapper {
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.chart-wrapper h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+
+.chart-wrapper canvas {
+    max-height: 280px;
+}
+
+/* ============================================
+   テーブルセクション
+   ============================================ */
+.table-filters {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.filter-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+}
+
+.filter-btn:hover {
+    background: var(--bg-tertiary);
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* アコーディオン */
+.accordion-header {
+    cursor: pointer;
+    user-select: none;
+}
+
+.accordion-header h2 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.accordion-icon {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.accordion-header.collapsed .accordion-icon {
+    transform: rotate(-90deg);
+}
+
+.accordion-content {
+    max-height: 500px;
+    overflow-y: auto;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+}
+
+.accordion-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+#assets-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+#assets-table th,
+#assets-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#assets-table th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+#assets-table tbody tr {
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+#assets-table tbody tr:hover {
+    background: var(--bg-secondary);
+}
+
+#assets-table tbody tr.highlighted {
+    background: rgba(37, 99, 235, 0.1);
+}
+
+#assets-table .type-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+#assets-table .type-badge.land {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--land-color);
+}
+
+#assets-table .type-badge.building {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--building-color);
+}
+
+/* ============================================
+   フッター
+   ============================================ */
+.footer {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* ============================================
+   レスポンシブ対応
+   ============================================ */
+@media (max-width: 768px) {
+    .container {
+        padding: var(--spacing-md);
+    }
+
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .stock-info {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .stock-price,
+    .market-cap {
+        text-align: left;
+    }
+
+    #map {
+        height: 300px;
+    }
+
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-wrapper {
+        min-width: 0;
+    }
+
+    .indicators-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .indicators-grid {
+        grid-template-columns: 1fr;
+    }
+}

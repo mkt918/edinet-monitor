@@ -1,0 +1,311 @@
+{
+  "companies": [
+    {
+      "code": "8267",
+      "name": "イオン株式会社",
+      "industry": "小売業",
+      "fiscalYearEnd": "2月",
+      "stockPrice": 3450,
+      "sharesOutstanding": 871892000,
+      "financials": {
+        "years": [
+          "2020",
+          "2021",
+          "2022",
+          "2023",
+          "2024"
+        ],
+        "revenue": [
+          8604207,
+          8603910,
+          8715957,
+          9116823,
+          9553557
+        ],
+        "operatingIncome": [
+          215117,
+          150586,
+          185659,
+          210351,
+          245654
+        ],
+        "netIncome": [
+          26838,
+          -71024,
+          6504,
+          44697,
+          56231
+        ],
+        "totalAssets": [
+          11150582,
+          12172520,
+          12561705,
+          13312290,
+          14089548
+        ],
+        "netAssets": [
+          2074189,
+          1977896,
+          2188371,
+          2440917,
+          2651234
+        ],
+        "dividendPerShare": [
+          36,
+          36,
+          36,
+          36,
+          50
+        ]
+      },
+      "balanceSheet": {
+        "currentAssets": 3456789,
+        "investmentSecurities": 234567,
+        "currentLiabilities": 4123456,
+        "fixedLiabilities": 5678901,
+        "note": "2024年2月期有価証券報告書より（百万円）"
+      },
+      "landValuation": {
+        "bookValue": 523456,
+        "marketValue": 789012,
+        "note": "2024年2月期有価証券報告書より"
+      },
+      "assets": [
+        {
+          "type": "land",
+          "name": "イオンモール幕張新都心",
+          "address": "千葉県千葉市美浜区豊砂1-1",
+          "lat": 35.6551,
+          "lng": 140.0352,
+          "area": 192000,
+          "floorArea": null,
+          "bookValue": 45678,
+          "usage": "店舗用地",
+          "acquisitionDate": "2013-12-01",
+          "constructionDate": null
+        },
+        {
+          "type": "building",
+          "name": "イオンモール幕張新都心 店舗棟",
+          "address": "千葉県千葉市美浜区豊砂1-1",
+          "lat": 35.6551,
+          "lng": 140.0352,
+          "area": null,
+          "floorArea": 350000,
+          "bookValue": 89012,
+          "usage": "店舗",
+          "acquisitionDate": null,
+          "constructionDate": "2013-10-01"
+        },
+        {
+          "type": "land",
+          "name": "イオンモール岡崎",
+          "address": "愛知県岡崎市戸崎町字外山38-5",
+          "lat": 34.9256,
+          "lng": 137.1456,
+          "area": 85000,
+          "floorArea": null,
+          "bookValue": 23456,
+          "usage": "店舗用地",
+          "acquisitionDate": "2008-03-01",
+          "constructionDate": null
+        },
+        {
+          "type": "building",
+          "name": "イオンモール岡崎 店舗棟",
+          "address": "愛知県岡崎市戸崎町字外山38-5",
+          "lat": 34.9256,
+          "lng": 137.1456,
+          "area": null,
+          "floorArea": 180000,
+          "bookValue": 45678,
+          "usage": "店舗",
+          "acquisitionDate": null,
+          "constructionDate": "2008-01-01"
+        },
+        {
+          "type": "land",
+          "name": "イオンモール名古屋茶屋",
+          "address": "愛知県名古屋市港区西茶屋2-11",
+          "lat": 35.0892,
+          "lng": 136.8456,
+          "area": 72000,
+          "floorArea": null,
+          "bookValue": 18900,
+          "usage": "店舗用地",
+          "acquisitionDate": "2014-06-01",
+          "constructionDate": null
+        },
+        {
+          "type": "building",
+          "name": "イオンモール名古屋茶屋 店舗棟",
+          "address": "愛知県名古屋市港区西茶屋2-11",
+          "lat": 35.0892,
+          "lng": 136.8456,
+          "area": null,
+          "floorArea": 160000,
+          "bookValue": 42300,
+          "usage": "店舗",
+          "acquisitionDate": null,
+          "constructionDate": "2014-03-01"
+        },
+        {
+          "type": "land",
+          "name": "イオンモール大阪ドームシティ",
+          "address": "大阪府大阪市西区千代崎3-13-1",
+          "lat": 34.6694,
+          "lng": 135.4756,
+          "area": 45000,
+          "floorArea": null,
+          "bookValue": 32100,
+          "usage": "店舗用地",
+          "acquisitionDate": "2013-02-01",
+          "constructionDate": null
+        },
+        {
+          "type": "building",
+          "name": "イオンモール大阪ドームシティ 店舗棟",
+          "address": "大阪府大阪市西区千代崎3-13-1",
+          "lat": 34.6694,
+          "lng": 135.4756,
+          "area": null,
+          "floorArea": 120000,
+          "bookValue": 56700,
+          "usage": "店舗",
+          "acquisitionDate": null,
+          "constructionDate": "2013-01-01"
+        },
+        {
+          "type": "land",
+          "name": "イオンモール北戸田",
+          "address": "埼玉県戸田市美女木東1-3-1",
+          "lat": 35.8123,
+          "lng": 139.6234,
+          "area": 38000,
+          "floorArea": null,
+          "bookValue": 15600,
+          "usage": "店舗用地",
+          "acquisitionDate": "2005-11-01",
+          "constructionDate": null
+        },
+        {
+          "type": "building",
+          "name": "イオンモール北戸田 店舗棟",
+          "address": "埼玉県戸田市美女木東1-3-1",
+          "lat": 35.8123,
+          "lng": 139.6234,
+          "area": null,
+          "floorArea": 95000,
+          "bookValue": 28900,
+          "usage": "店舗",
+          "acquisitionDate": null,
+          "constructionDate": "2005-09-01"
+        },
+        {
+          "type": "land",
+          "name": "イオンモール福岡",
+          "address": "福岡県糟屋郡粕屋町大字酒殿字老ノ木192-1",
+          "lat": 33.5912,
+          "lng": 130.4756,
+          "area": 65000,
+          "floorArea": null,
+          "bookValue": 19800,
+          "usage": "店舗用地",
+          "acquisitionDate": "2010-04-01",
+          "constructionDate": null
+        },
+        {
+          "type": "building",
+          "name": "イオンモール福岡 店舗棟",
+          "address": "福岡県糟屋郡粕屋町大字酒殿字老ノ木192-1",
+          "lat": 33.5912,
+          "lng": 130.4756,
+          "area": null,
+          "floorArea": 145000,
+          "bookValue": 38700,
+          "usage": "店舗",
+          "acquisitionDate": null,
+          "constructionDate": "2010-02-01"
+        },
+        {
+          "type": "land",
+          "name": "イオン本社",
+          "address": "千葉県千葉市美浜区中瀬1-5-1",
+          "lat": 35.6489,
+          "lng": 140.0567,
+          "area": 12000,
+          "floorArea": null,
+          "bookValue": 8900,
+          "usage": "本社用地",
+          "acquisitionDate": "1989-04-01",
+          "constructionDate": null
+        },
+        {
+          "type": "building",
+          "name": "イオンタワー（本社ビル）",
+          "address": "千葉県千葉市美浜区中瀬1-5-1",
+          "lat": 35.6489,
+          "lng": 140.0567,
+          "area": null,
+          "floorArea": 48000,
+          "bookValue": 23400,
+          "usage": "本社事務所",
+          "acquisitionDate": null,
+          "constructionDate": "1990-01-01"
+        },
+        {
+          "type": "land",
+          "name": "イオンモール札幌発寒",
+          "address": "北海道札幌市西区発寒8条12-1",
+          "lat": 43.0912,
+          "lng": 141.2678,
+          "area": 52000,
+          "floorArea": null,
+          "bookValue": 11200,
+          "usage": "店舗用地",
+          "acquisitionDate": "2000-09-01",
+          "constructionDate": null
+        },
+        {
+          "type": "building",
+          "name": "イオンモール札幌発寒 店舗棟",
+          "address": "北海道札幌市西区発寒8条12-1",
+          "lat": 43.0912,
+          "lng": 141.2678,
+          "area": null,
+          "floorArea": 110000,
+          "bookValue": 31500,
+          "usage": "店舗",
+          "acquisitionDate": null,
+          "constructionDate": "2000-07-01"
+        },
+        {
+          "type": "land",
+          "name": "イオンモール沖縄ライカム",
+          "address": "沖縄県中頭郡北中城村字ライカム1番地",
+          "lat": 26.3012,
+          "lng": 127.7934,
+          "area": 88000,
+          "floorArea": null,
+          "bookValue": 25600,
+          "usage": "店舗用地",
+          "acquisitionDate": "2015-04-01",
+          "constructionDate": null
+        },
+        {
+          "type": "building",
+          "name": "イオンモール沖縄ライカム 店舗棟",
+          "address": "沖縄県中頭郡北中城村字ライカム1番地",
+          "lat": 26.3012,
+          "lng": 127.7934,
+          "area": null,
+          "floorArea": 175000,
+          "bookValue": 48900,
+          "usage": "店舗",
+          "acquisitionDate": null,
+          "constructionDate": "2015-02-01"
+        }
+      ]
+    }
+  ]
+}

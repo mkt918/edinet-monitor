@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有価証券報告書ダッシュボード</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- JSZip (XBRL解凍用) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- JSONインポートモーダル -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📥 JSONデータをインポート</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-hint">Geminiで生成したJSONをここに貼り付けてください。</p>
+                <textarea id="json-input" placeholder='{
+  "code": "1234",
+  "name": "企業名",
+  ...
+}'></textarea>
+                <div id="import-error" class="import-error"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="import-cancel" class="btn btn-secondary">キャンセル</button>
+                <button id="import-submit" class="btn btn-primary">インポート</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 企業タブバー -->
+        <div class="company-tabs-container">
+            <div class="company-tabs" id="company-tabs">
+                <!-- JavaScriptで動的に追加 -->
+            </div>
+            <button id="import-btn" class="tab-add-btn" title="企業を追加">＋</button>
+            <button id="edinet-btn" class="tab-add-btn" title="EDINETから取得" style="margin-left: 8px;">📡</button>
+        </div>
+
+        <!-- ヘッダー：企業概要 -->
+        <header class="company-header">
+            <div class="header-content">
+                <div class="company-info">
+                    <h1 id="company-name">-</h1>
+                    <div class="company-meta">
+                        <span class="badge" id="company-code">-</span>
+                        <span class="badge" id="company-industry">-</span>
+                        <span class="badge" id="fiscal-year">決算: -</span>
+                    </div>
+                </div>
+                <div class="stock-info">
+                    <div class="stock-price">
+                        <span class="label">株価</span>
+                        <span class="value" id="stock-price">-</span>
+                        <span class="unit">円</span>
+                    </div>
+                    <div class="market-cap">
+                        <span class="label">時価総額</span>
+                        <span class="value" id="market-cap">-</span>
+                        <span class="unit">億円</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 地図セクション -->
+        <section class="map-section">
+            <div class="section-header">
+                <h2>📍 資産マップ</h2>
+                <div class="map-legend">
+                    <span class="legend-item land">● 土地</span>
+                    <span class="legend-item building">● 建物</span>
+                </div>
+            </div>
+            <div id="map"></div>
+        </section>
+
+        <!-- 資産テーブルセクション -->
+        <section class="table-section">
+            <div class="section-header accordion-header" id="assets-accordion-header">
+                <h2>📋 資産一覧 <span class="accordion-icon">▼</span></h2>
+                <div class="table-filters">
+                    <button class="filter-btn active" data-filter="all">すべて</button>
+                    <button class="filter-btn" data-filter="land">土地のみ</button>
+                    <button class="filter-btn" data-filter="building">建物のみ</button>
+                </div>
+            </div>
+            <div class="accordion-content" id="assets-accordion-content">
+                <div class="table-container">
+                    <table id="assets-table">
+                        <thead>
+                            <tr>
+                                <th>種別</th>
+                                <th>名称</th>
+                                <th>所在地</th>
+                                <th>面積（㎡）</th>
+                                <th>帳簿価額（百万円）</th>
+                                <th>用途</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assets-tbody">
+                            <!-- JavaScriptで動的に追加 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 投資指標セクション -->
+        <section class="indicators-section">
+            <div class="section-header">
+                <h2>📊 投資指標</h2>
+            </div>
+            <div class="indicators-grid" id="indicators-grid">
+                <!-- JavaScriptで動的に追加 -->
+            </div>
+
+            <!-- 時系列グラフ -->
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <h3>売上高・営業利益推移</h3>
+                    <canvas id="revenue-chart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>資産・純資産推移</h3>
+                    <canvas id="assets-chart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <h3>配当額・配当性向・EPS推移</h3>
+                    <canvas id="dividend-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- フッター -->
+        <footer class="footer">
+            <p>データ出典: 有価証券報告書 | 本ダッシュボードは投資助言を目的としたものではありません</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/edinet_integration.js"></script>
+    <script src="js/indicators.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/table.js"></script>
+    <script src="js/chart.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
