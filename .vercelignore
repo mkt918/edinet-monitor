@@ -1,0 +1,15 @@
+# Dependencies
+node_modules
+
+# Database (not needed for Vercel)
+data
+
+# Temp files (not needed for Vercel)
+temp
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local

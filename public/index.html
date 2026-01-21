@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EDINET 大量保有報告書モニター</title>
+  <meta name="description" content="大量保有報告書をリアルタイムで監視">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="app">
+    <!-- ヘッダー -->
+    <header class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1 class="logo">
+            <span class="logo-icon">📊</span>
+            EDINET Monitor
+          </h1>
+          <div class="header-stats">
+            <span class="stat-item">📄 <strong id="todayCount">--</strong>件</span>
+            <span class="stat-item">⏰ <strong id="lastUpdated">--:--</strong></span>
+            <span class="stat-item">⭐ <strong id="watchlistCount">--</strong>件お気に入り</span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button id="refreshBtn" class="btn btn-primary btn-sm">
+            <span class="btn-icon">🔄</span>
+            更新
+          </button>
+          <button id="watchlistModalBtn" class="btn btn-secondary btn-sm">
+            <span class="btn-icon">⭐</span>
+            お気に入り設定
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main">
+
+      <!-- フィルター -->
+      <section class="filter-section">
+        <div class="filter-bar">
+          <div class="quick-filters">
+            <button class="quick-filter-btn" data-range="today">今日</button>
+            <button class="quick-filter-btn" data-range="week">今週</button>
+            <button class="quick-filter-btn" data-range="month">今月</button>
+            <button class="quick-filter-btn active" data-range="all">全て</button>
+          </div>
+          <div class="filter-inputs">
+            <input type="date" id="dateFilterStart" class="filter-input filter-input-sm" placeholder="開始日">
+            <span class="filter-separator">〜</span>
+            <input type="date" id="dateFilterEnd" class="filter-input filter-input-sm" placeholder="終了日">
+            <input type="text" id="searchFilter" class="filter-input filter-input-sm" placeholder="🔍 提出者名で検索...">
+            <select id="typeFilter" class="filter-select filter-select-sm">
+              <option value="">全ての報告書</option>
+              <option value="大量保有報告書">大量保有報告書</option>
+              <option value="変更報告書">変更報告書</option>
+              <option value="訂正報告書">訂正報告書</option>
+            </select>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="watchedOnlyFilter">
+              <span>お気に入り</span>
+            </label>
+            <label class="filter-checkbox">
+              <input type="checkbox" id="articlesOnlyFilter">
+              <span>定款変更のみ</span>
+            </label>
+            <button id="clearFiltersBtn" class="btn btn-secondary btn-sm">
+              <span class="btn-icon">✕</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 報告書一覧 -->
+      <section class="reports-section">
+        <div class="section-header">
+          <h2>大量保有報告書一覧</h2>
+          <span class="report-count" id="reportCount">0件</span>
+        </div>
+        <div class="reports-list" id="reportsList">
+          <div class="loading">読み込み中...</div>
+        </div>
+        <div class="load-more-container" id="loadMoreContainer"
+          style="display: none; text-align: center; margin-top: 20px; margin-bottom: 20px;">
+          <button id="loadMoreBtn" class="action-btn" style="padding: 10px 30px;">もっと見る</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- 監視対象モーダル -->
+    <div class="modal" id="watchlistModal">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>お気に入り設定</h2>
+          <button class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="watchlist-form">
+            <input type="text" id="watchlistInput" class="filter-input" placeholder="名前を入力...">
+            <button id="addWatchlistBtn" class="btn btn-primary">追加</button>
+          </div>
+          <div class="watchlist-items" id="watchlistItems">
+            <!-- お気に入りがここに表示される -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 企業ダッシュボードモーダル -->
+    <div class="modal" id="dashboardModal">
+      <div class="modal-overlay"></div>
+      <div class="modal-content dashboard-content">
+        <div class="modal-header">
+          <h2 id="dashboardTitle">企業ダッシュボード</h2>
+          <button class="modal-close" id="closeDashboardModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="dashboard-links">
+            <a href="#" id="linkGoogleFinance" target="_blank" class="dashboard-link-btn">Google Finance</a>
+            <a href="#" id="linkYahooFinance" target="_blank" class="dashboard-link-btn">Yahoo!ファイナンス</a>
+          </div>
+
+          <h3 class="dashboard-section-title">直近の提出書類</h3>
+          <div class="dashboard-docs-list" id="dashboardDocsList">
+            <div class="loading">読み込み中...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+
+</html>
