@@ -507,7 +507,7 @@ function renderAttributesContent(attrs) {
     if (!attrs) return '';
 
     let html = `
-        < div class="attributes-box" >
+        <div class="attributes-box">
             <div class="attr-header">
                 <span class="attr-label">属性:</span>
                 <span class="attr-badge">${escapeHtml(attrs.attribute)}</span>
@@ -515,21 +515,21 @@ function renderAttributesContent(attrs) {
     `;
 
     if (attrs.shareholders && attrs.shareholders.length > 0) {
-        html += `< div class="shareholders-mini-list" > `;
+        html += `<div class="shareholders-mini-list">`;
         attrs.shareholders.forEach(h => {
             // 5%以上なら赤字、など
             html += `
-        < div class="shareholder-mini-item" >
+                <div class="shareholder-mini-item">
                     <span class="sh-rank">${h.rank}.</span>
                     <span class="sh-name" title="${escapeHtml(h.name)}">${escapeHtml(h.name)}</span>
                     <span class="sh-ratio">${(h.ratio * 100).toFixed(1)}%</span>
-                </div >
+                </div>
         `;
         });
-        html += `</div > `;
+        html += `</div>`;
     }
 
-    html += `</div > `;
+    html += `</div>`;
     return html;
 }
 
@@ -860,14 +860,14 @@ async function openDashboardV2(edinetCode, issuerName, secCode, type = 'issuer')
     let linksHtml = '';
 
     // Google検索ボタン
-    linksHtml += `< a href = "https://www.google.com/search?q=${encodeURIComponent(issuerName)}" target = "_blank" class="dashboard-link-btn" > Google検索</a > `;
+    linksHtml += `<a href="https://www.google.com/search?q=${encodeURIComponent(issuerName)}" target="_blank" class="dashboard-link-btn">Google検索</a>`;
 
     if (type === 'issuer') {
         const code = secCode ? secCode.substring(0, 4) : null;
         if (code) {
-            linksHtml += `< a href = "https://finance.yahoo.co.jp/quote/${code}.T" target = "_blank" class="dashboard-link-btn" > Yahoo!ファイナンス</a > `;
-            linksHtml += `< a href = "https://irbank.net/${code}" target = "_blank" class="dashboard-link-btn" > IR BANK</a > `;
-            linksHtml += `< a href = "https://www.buffett-code.com/company/${code}/" target = "_blank" class="dashboard-link-btn" > バフェット・コード</a > `;
+            linksHtml += `<a href="https://finance.yahoo.co.jp/quote/${code}.T" target="_blank" class="dashboard-link-btn">Yahoo!ファイナンス</a>`;
+            linksHtml += `<a href="https://irbank.net/${code}" target="_blank" class="dashboard-link-btn">IR BANK</a>`;
+            linksHtml += `<a href="https://www.buffett-code.com/company/${code}/" target="_blank" class="dashboard-link-btn">バフェット・コード</a>`;
         }
     }
 
@@ -902,9 +902,9 @@ async function openDashboard(edinetCode, issuerName, secCode, type = 'issuer') {
 
     let linksHtml = '';
     if (code) {
-        linksHtml += `< a href = "https://finance.yahoo.co.jp/quote/${code}.T" target = "_blank" class="dashboard-link-btn" > Yahoo!ファイナンス</a > `;
-        linksHtml += `< a href = "https://irbank.net/${code}" target = "_blank" class="dashboard-link-btn" > IR BANK</a > `;
-        linksHtml += `< a href = "https://www.buffett-code.com/company/${code}/" target = "_blank" class="dashboard-link-btn" > バフェット・コード</a > `;
+        linksHtml += `<a href="https://finance.yahoo.co.jp/quote/${code}.T" target="_blank" class="dashboard-link-btn">Yahoo!ファイナンス</a>`;
+        linksHtml += `<a href="https://irbank.net/${code}" target="_blank" class="dashboard-link-btn">IR BANK</a>`;
+        linksHtml += `<a href="https://www.buffett-code.com/company/${code}/" target="_blank" class="dashboard-link-btn">バフェット・コード</a>`;
     } else {
         linksHtml = '<span class="text-muted">証券コード情報なし</span>';
     }
@@ -928,7 +928,7 @@ function renderDashboardDocs(docs) {
     }
 
     elements.dashboardDocsList.innerHTML = docs.map(doc => `
-        < div class="dashboard-doc-item" >
+        <div class="dashboard-doc-item">
             <div class="doc-main">
                 <div class="doc-date">${formatDateTime(doc.submit_date_time)}</div>
                 <div class="doc-desc">${escapeHtml(doc.doc_description)}</div>
@@ -941,7 +941,7 @@ function renderDashboardDocs(docs) {
                     </button>
                 ` : ''}
             </div>
-        </div >
+        </div>
         `).join('');
 }
 
