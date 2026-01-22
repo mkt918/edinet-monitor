@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { config } from '../config.js';
+import { IndustryMapper } from './industryMapper.js';
 
 /**
  * データベース管理クラス（Supabase使用）
@@ -160,6 +161,39 @@ class DatabaseService {
     }
 
     /**
+     * 最新の有価証券報告書を取得
+     * @param {string} edinetCode - 発行者のEDINETコード
+     * @returns {Object|null} 報告書データ
+     */
+    async getLatestAnnualReport(edinetCode) {
+        if (!edinetCode) return null;
+        try {
+            // form_code = '030000' かつ doc_description に '有価証券報告書' (訂正除く)
+            // Supabase filter: form_code.eq.030000, doc_description.not.ilike.%訂正%
+            // Note: form_code check is usually enough for 030000 if filter logic in client is correct.
+            const { data, error } = await this.supabase
+                .from('reports')
+                .select('*')
+                .or(`issuer_edinet_code.eq.${edinetCode},edinet_code.eq.${edinetCode}`) // Annual Report is filed BY the issuer, so edinet_code matches
+                .eq('form_code', '030000') // 有価証券報告書
+                .not('doc_description', 'ilike', '%訂正%') // 訂正を除く
+                .order('submit_date_time', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (error) {
+                if (error.code === 'PGRST116') return null;
+                console.error('Error fetching latest annual report:', error);
+                return null;
+            }
+            return data;
+        } catch (e) {
+            console.error('Error in getLatestAnnualReport:', e);
+            return null;
+        }
+    }
+
+    /**
      * 提出者のEDINETコードに関連する報告書を取得
      * @param {string} edinetCode - 提出者のEDINETコード
      * @param {number} limit - 取得件数
@@ -193,7 +227,7 @@ class DatabaseService {
      * @param {Object} options - 検索オプション
      * @returns {Array} 報告書一覧
      */
-    async getReports({ date, startDate, endDate, search, filerName, limit = 100, offset = 0 } = {}) {
+    async getReports({ date, startDate, endDate, search, filerName, industry, limit = 100, offset = 0 } = {}) {
         try {
             let query = this.supabase
                 .from('reports')
@@ -216,6 +250,22 @@ class DatabaseService {
 
             if (search) {
                 query = query.or(`filer_name.ilike.%${search}%,doc_description.ilike.%${search}%`);
+            }
+
+            if (industry) {
+                // 業種名から証券コード範囲を取得
+                const ranges = IndustryMapper.getRanges(industry);
+                if (ranges.length > 0) {
+                    // (sec_code >= min AND sec_code <= max) OR ...
+                    // Supabaseのフィルタで表現:
+                    // or(and(sec_code.gte.A,sec_code.lte.B),and(...))
+                    const conditions = ranges.map(r => {
+                        const start = r[0] + '0'; // 1300 -> 13000
+                        const end = r[1] + '9';   // 1399 -> 13999
+                        return `and(sec_code.gte.${start},sec_code.lte.${end})`;
+                    });
+                    query = query.or(conditions.join(','));
+                }
             }
 
             query = query.range(offset, offset + limit - 1);

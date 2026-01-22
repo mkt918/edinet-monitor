@@ -1139,3 +1139,109 @@ body {
   .btn-add-issuer-watch.watched {
     color: var(--color-warning);
   }
+}
+
+/* ===== Attributes & Shareholders ===== */
+.attributes-container {
+    margin-top: 12px;
+    border-top: 1px dashed var(--color-border);
+    padding-top: 8px;
+}
+
+.attributes-box {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+}
+
+.attr-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.attr-label {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.attr-badge {
+    background: linear-gradient(135deg, var(--color-secondary), #0984e3);
+    color: white;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.shareholders-mini-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+}
+
+.shareholder-mini-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.shareholder-mini-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.sh-rank {
+    color: var(--color-text-muted);
+    font-family: monospace;
+    font-size: 0.9rem;
+    width: 15px;
+}
+
+.sh-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.sh-ratio {
+    color: var(--color-success);
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.loading-xs {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.loading-xs::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.attr-tag {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    background: rgba(255,255,255,0.05);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-style: italic;
+}

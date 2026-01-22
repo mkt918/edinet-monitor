@@ -14,6 +14,7 @@ let state = {
         date: '',
         search: '',
         type: '',
+        industry: '',
         watchedOnly: false,
         articlesOnly: false,
         dateStart: '',
@@ -37,6 +38,7 @@ const elements = {
     dateFilterEnd: document.getElementById('dateFilterEnd'),
     searchFilter: document.getElementById('searchFilter'),
     typeFilter: document.getElementById('typeFilter'),
+    industryFilter: document.getElementById('industryFilter'),
     watchedOnlyFilter: document.getElementById('watchedOnlyFilter'),
     articlesOnlyFilter: document.getElementById('articlesOnlyFilter'),
     clearFiltersBtn: document.getElementById('clearFiltersBtn'),
@@ -66,6 +68,7 @@ async function fetchReports(options = {}) {
     if (options.startDate) params.append('startDate', options.startDate);
     if (options.endDate) params.append('endDate', options.endDate);
     if (options.search) params.append('search', options.search);
+    if (options.industry) params.append('industry', options.industry);
 
     // ページネーション
     if (options.limit) params.append('limit', options.limit);
@@ -309,24 +312,20 @@ function renderReports() {
                 });
             }
 
-            // ダッシュボードリンク
-            const issuerLink = detailsDiv.querySelector('.issuer-link');
-            if (issuerLink) {
-                issuerLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const edinetCode = issuerLink.dataset.edinetCode;
-                    const issuerName = issuerLink.dataset.issuerName;
-                    const secCode = issuerLink.dataset.secCode;
-                    const type = issuerLink.dataset.type || 'issuer';
-
-                    if (edinetCode) {
-                        openDashboardV2(edinetCode, issuerName, secCode, type);
-                    } else {
-                        window.open(`https://www.google.com/search?q=${encodeURIComponent(issuerName)}`, '_blank');
-                    }
-                });
-
+            // 属性情報の取得と表示
+            if (details.issuerEdinetCode || details.issuerName) {
+                const edinetCode = details.issuerEdinetCode;
+                // コンテナを探す
+                const attrContainer = detailsDiv.querySelector('.attributes-container');
+                if (attrContainer && edinetCode) {
+                    fetchIssuerAttributes(edinetCode).then(attrs => {
+                        if (attrs) {
+                            attrContainer.innerHTML = renderAttributesContent(attrs);
+                        } else {
+                            attrContainer.innerHTML = '<span class="attr-tag">属性情報なし</span>';
+                        }
+                    });
+                }
             }
         } else {
             detailsDiv.innerHTML = '<div class="details-error">詳細情報を取得できませんでした</div>';
@@ -425,6 +424,20 @@ function isInWatchlist(filerName) {
 /**
  * 詳細情報をHTMLにレンダリング
  */
+async function fetchIssuerAttributes(edinetCode) {
+    try {
+        const response = await fetch(`${API_BASE}/api/issuer/${edinetCode}/attributes`);
+        const data = await response.json();
+        return data.success ? data.data : null;
+    } catch (e) {
+        console.error('Error fetching attributes:', e);
+        return null;
+    }
+}
+
+/**
+ * 詳細情報をHTMLにレンダリング
+ */
 function renderDetailsContent(details) {
     const changeClass = details.holdingRatioChange > 0 ? 'positive' :
         details.holdingRatioChange < 0 ? 'negative' : '';
@@ -482,7 +495,42 @@ function renderDetailsContent(details) {
             </div>
             ` : ''}
         </div>
+        
+        <!-- 属性情報・大株主 -->
+        <div class="attributes-container">
+            <div class="loading-xs">属性確認中...</div>
+        </div>
     `;
+}
+
+function renderAttributesContent(attrs) {
+    if (!attrs) return '';
+
+    let html = `
+        < div class="attributes-box" >
+            <div class="attr-header">
+                <span class="attr-label">属性:</span>
+                <span class="attr-badge">${escapeHtml(attrs.attribute)}</span>
+            </div>
+    `;
+
+    if (attrs.shareholders && attrs.shareholders.length > 0) {
+        html += `< div class="shareholders-mini-list" > `;
+        attrs.shareholders.forEach(h => {
+            // 5%以上なら赤字、など
+            html += `
+        < div class="shareholder-mini-item" >
+                    <span class="sh-rank">${h.rank}.</span>
+                    <span class="sh-name" title="${escapeHtml(h.name)}">${escapeHtml(h.name)}</span>
+                    <span class="sh-ratio">${(h.ratio * 100).toFixed(1)}%</span>
+                </div >
+        `;
+        });
+        html += `</div > `;
+    }
+
+    html += `</div > `;
+    return html;
 }
 
 // ===== Helper Functions =====
@@ -518,7 +566,7 @@ function formatDateTime(dt) {
         const day = String(date.getDate()).padStart(2, '0');
         const hour = String(date.getHours()).padStart(2, '0');
         const minute = String(date.getMinutes()).padStart(2, '0');
-        return `${year}/${month}/${day} ${hour}:${minute}`;
+        return `${year} /${month}/${day} ${hour}:${minute} `;
     } catch (e) {
         return dt.replace('T', ' ').substring(0, 16);
     }
@@ -565,6 +613,7 @@ async function loadReports() {
         startDate: state.filters.dateStart,
         endDate: state.filters.dateEnd,
         search: state.filters.search,
+        industry: state.filters.industry,
         limit: limit,
         offset: 0
     });
@@ -649,6 +698,11 @@ function setupEventListeners() {
         renderReports();
     });
 
+    elements.industryFilter.addEventListener('change', (e) => {
+        state.filters.industry = e.target.value;
+        loadReports(); // APIから再取得が必要（サーバーサイドフィルタ）
+    });
+
     // 監視対象のみフィルター
     elements.watchedOnlyFilter.addEventListener('change', (e) => {
         state.filters.watchedOnly = e.target.checked;
@@ -667,6 +721,7 @@ function setupEventListeners() {
         elements.dateFilterEnd.value = '';
         elements.searchFilter.value = '';
         elements.typeFilter.value = '';
+        elements.industryFilter.value = '';
         elements.watchedOnlyFilter.checked = false;
         elements.articlesOnlyFilter.checked = false;
         state.filters = {
@@ -674,6 +729,7 @@ function setupEventListeners() {
             dateEnd: '',
             search: '',
             type: '',
+            industry: '',
             watchedOnly: false,
             articlesOnly: false
         };
@@ -804,14 +860,14 @@ async function openDashboardV2(edinetCode, issuerName, secCode, type = 'issuer')
     let linksHtml = '';
 
     // Google検索ボタン
-    linksHtml += `<a href="https://www.google.com/search?q=${encodeURIComponent(issuerName)}" target="_blank" class="dashboard-link-btn">Google検索</a>`;
+    linksHtml += `< a href = "https://www.google.com/search?q=${encodeURIComponent(issuerName)}" target = "_blank" class="dashboard-link-btn" > Google検索</a > `;
 
     if (type === 'issuer') {
         const code = secCode ? secCode.substring(0, 4) : null;
         if (code) {
-            linksHtml += `<a href="https://finance.yahoo.co.jp/quote/${code}.T" target="_blank" class="dashboard-link-btn">Yahoo!ファイナンス</a>`;
-            linksHtml += `<a href="https://irbank.net/${code}" target="_blank" class="dashboard-link-btn">IR BANK</a>`;
-            linksHtml += `<a href="https://www.buffett-code.com/company/${code}/" target="_blank" class="dashboard-link-btn">バフェット・コード</a>`;
+            linksHtml += `< a href = "https://finance.yahoo.co.jp/quote/${code}.T" target = "_blank" class="dashboard-link-btn" > Yahoo!ファイナンス</a > `;
+            linksHtml += `< a href = "https://irbank.net/${code}" target = "_blank" class="dashboard-link-btn" > IR BANK</a > `;
+            linksHtml += `< a href = "https://www.buffett-code.com/company/${code}/" target = "_blank" class="dashboard-link-btn" > バフェット・コード</a > `;
         }
     }
 
@@ -846,9 +902,9 @@ async function openDashboard(edinetCode, issuerName, secCode, type = 'issuer') {
 
     let linksHtml = '';
     if (code) {
-        linksHtml += `<a href="https://finance.yahoo.co.jp/quote/${code}.T" target="_blank" class="dashboard-link-btn">Yahoo!ファイナンス</a>`;
-        linksHtml += `<a href="https://irbank.net/${code}" target="_blank" class="dashboard-link-btn">IR BANK</a>`;
-        linksHtml += `<a href="https://www.buffett-code.com/company/${code}/" target="_blank" class="dashboard-link-btn">バフェット・コード</a>`;
+        linksHtml += `< a href = "https://finance.yahoo.co.jp/quote/${code}.T" target = "_blank" class="dashboard-link-btn" > Yahoo!ファイナンス</a > `;
+        linksHtml += `< a href = "https://irbank.net/${code}" target = "_blank" class="dashboard-link-btn" > IR BANK</a > `;
+        linksHtml += `< a href = "https://www.buffett-code.com/company/${code}/" target = "_blank" class="dashboard-link-btn" > バフェット・コード</a > `;
     } else {
         linksHtml = '<span class="text-muted">証券コード情報なし</span>';
     }
@@ -872,7 +928,7 @@ function renderDashboardDocs(docs) {
     }
 
     elements.dashboardDocsList.innerHTML = docs.map(doc => `
-        <div class="dashboard-doc-item">
+        < div class="dashboard-doc-item" >
             <div class="doc-main">
                 <div class="doc-date">${formatDateTime(doc.submit_date_time)}</div>
                 <div class="doc-desc">${escapeHtml(doc.doc_description)}</div>
@@ -885,8 +941,8 @@ function renderDashboardDocs(docs) {
                     </button>
                 ` : ''}
             </div>
-        </div>
-    `).join('');
+        </div >
+        `).join('');
 }
 
 // ===== Init =====

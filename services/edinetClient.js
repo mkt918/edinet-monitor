@@ -60,6 +60,10 @@ export class EdinetClient {
                 if (doc.docDescription && doc.docDescription.includes('定款')) {
                     return true;
                 }
+                // 3. 有価証券報告書 (010, FormCode 030000)
+                if (doc.formCode === '030000') {
+                    return true;
+                }
             }
 
             return false;
@@ -106,6 +110,10 @@ export class EdinetClient {
                 return '定款変更';
             }
             return '定款関連';
+        }
+
+        if (doc.ordinanceCode === config.disclosureOrdinanceCode) {
+            if (formCode === '030000') return '有価証券報告書';
         }
 
         const types = {

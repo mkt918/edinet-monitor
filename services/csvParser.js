@@ -9,9 +9,10 @@ export class CsvParser {
     /**
      * 書類IDからCSVデータを取得してパース（メモリのみ）
      * @param {string} docId - EDINET書類ID
+     * @param {string} type - 'largeHolding' or 'annualReport'
      * @returns {Promise<Object|null>} パース結果
      */
-    static async fetchAndParse(docId) {
+    static async fetchAndParse(docId, type = 'largeHolding') {
         try {
             // CSVデータ（type=5）をダウンロード
             const url = `${config.edinetBaseUrl}/documents/${docId}?type=5&Subscription-Key=${config.edinetApiKey}`;
@@ -31,9 +32,27 @@ export class CsvParser {
             const zipEntries = zip.getEntries();
 
             // CSVファイルを検索
-            const csvEntry = zipEntries.find(entry =>
-                !entry.isDirectory && entry.entryName.endsWith('.csv')
-            );
+            let csvEntry;
+            if (type === 'annualReport') {
+                // 有価証券報告書の場合、jpcrp...csvを探す
+                // 複数ある場合は大株主情報を含むものを優先的に探すが、
+                // 通常は主要なCSVに含まれる。
+                csvEntry = zipEntries.find(entry =>
+                    !entry.isDirectory &&
+                    entry.entryName.endsWith('.csv') &&
+                    entry.entryName.includes('jpcrp') &&
+                    entry.entryName.includes('asr') // Annual Securities Report
+                );
+            } else {
+                csvEntry = zipEntries.find(entry =>
+                    !entry.isDirectory && entry.entryName.endsWith('.csv')
+                );
+            }
+
+            if (!csvEntry) {
+                // 厳密な検索で見つからない場合、任意のCSVをフォールバックとして探す（サイズが大きいもの優先など）
+                csvEntry = zipEntries.find(entry => !entry.isDirectory && entry.entryName.endsWith('.csv'));
+            }
 
             if (!csvEntry) {
                 console.error(`No CSV file found for ${docId}`);
@@ -42,9 +61,12 @@ export class CsvParser {
 
             // CSVをパース（UTF-16LE）
             const csvContent = csvEntry.getData().toString('utf16le');
-            const result = this.parseLargeHoldingCsv(csvContent);
 
-            return result;
+            if (type === 'annualReport') {
+                return this.parseAnnualReportCsv(csvContent);
+            } else {
+                return this.parseLargeHoldingCsv(csvContent);
+            }
 
         } catch (error) {
             console.error(`Error parsing CSV for ${docId}:`, error);
@@ -135,4 +157,101 @@ export class CsvParser {
         const sign = change >= 0 ? '+' : '';
         return sign + (change * 100).toFixed(2) + '%';
     }
+    /**
+     * 有価証券報告書CSVから大株主データを抽出
+     * @param {string} content - CSVコンテンツ
+     * @returns {Object} 大株主データと属性
+     */
+    static parseAnnualReportCsv(content) {
+        const lines = content.split('\n');
+        const shareholders = [];
+
+        // 列インデックスの特定用
+        // "要素ID"	"項目名"	"コンテキストID" "相対年度" "連結・個別" "期間・時点" "ユニットID" "単位" "値"
+        // 通常は要素ID=0, コンテキストID=2, 値=8
+
+        for (const line of lines) {
+            const columns = line.split('\t').map(col =>
+                col.replace(/"/g, '').replace(/\r/g, '').trim()
+            );
+            if (columns.length < 9) continue;
+
+            const elementId = columns[0];
+            const label = columns[1];
+            const contextId = columns[2];
+            const value = columns[8];
+
+            // 大株主データの抽出
+            // コンテキストIDに 'MajorShareholdersMember' が含まれるものを対象
+            // CurrentYearInstant_No1MajorShareholdersMember などを探す
+            if (contextId && contextId.includes('CurrentYearInstant') && contextId.includes('MajorShareholdersMember')) {
+
+                // メンバー番号を抽出 (No1, No2...)
+                const match = contextId.match(/No(\d+)MajorShareholdersMember/);
+                if (!match) continue;
+                const rank = parseInt(match[1], 10);
+
+                // 既存のオブジェクトを取得または作成
+                let holder = shareholders.find(h => h.rank === rank);
+                if (!holder) {
+                    holder = { rank, name: '', shares: 0, ratio: 0 };
+                    shareholders.push(holder);
+                }
+
+                if (elementId.includes('NameMajorShareholders')) {
+                    holder.name = value;
+                } else if (elementId.includes('NumberOfSharesHeld')) {
+                    holder.shares = parseFloat(value) || 0;
+                } else if (elementId.includes('ShareholdingRatio')) {
+                    holder.ratio = parseFloat(value) || 0;
+                }
+            }
+        }
+
+        // ブラックリスト（除外キーワード）
+        const blacklist = [
+            '信託口', 'マスタートラスト', '日本カストディ', '資産管理サービス信託',
+            '従業員持株会', '自社株', '自己株式',
+            'STATE STREET BANK', 'THE BANK OF NEW YORK', 'JP MORGAN',
+            'GOVERNMENT OF NORWAY', '日本証券金融'
+        ];
+
+        // フィルタリングとソート
+        const validShareholders = shareholders
+            .filter(h => h.name && h.shares > 0) // 名前があり株数がある
+            .map(h => {
+                // 名前から全角スペースを除去などの正規化
+                h.name = h.name.replace(/　/g, ' ').trim();
+                return h;
+            })
+            .sort((a, b) => b.ratio - a.ratio); // 比率降順
+
+        // 属性判定用のクリーンな株主リスト（ブラックリスト除外）
+        const attributeShareholders = validShareholders.filter(h => {
+            return !blacklist.some(keyword => h.name.includes(keyword));
+        });
+
+        // 属性（筆頭株主の系列）
+        let attribute = '独立系'; // デフォルト
+        if (attributeShareholders.length > 0) {
+            const top = attributeShareholders[0];
+            // 「株式会社」などを除去して簡略化
+            const simpleName = top.name
+                .replace(/(株式会社|有限会社|一般社団法人|公益財団法人)/g, '')
+                .trim();
+            attribute = `${simpleName}系`;
+        }
+
+        // トップ3を返す（表示用はブラックリスト除外しない場合もありうるが、
+        // ユーザー要望では「属性がわかる」のが重要なので、ブラックリスト除外後のトップ3を優先表示するか、
+        // あるいは生のトップ3を表示しつつ属性は別途出すか。
+        // 「大株主トップ3が即座に見える化」「マスター信託とか自社株会とかはいらん」とのことなので、
+        // 除外後のトップ3を返す。
+
+        return {
+            shareholders: attributeShareholders.slice(0, 3), // 除外後のトップ3
+            attribute: attribute
+        };
+    }
 }
+

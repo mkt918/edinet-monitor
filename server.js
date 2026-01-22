@@ -47,13 +47,14 @@ app.use(async (req, res, next) => {
  */
 app.get('/api/reports', async (req, res) => {
     try {
-        const { date, startDate, endDate, search, filerName, limit = 100, offset = 0 } = req.query;
+        const { date, startDate, endDate, search, filerName, industry, limit = 100, offset = 0 } = req.query;
         const reports = await database.getReports({
             date,
             startDate,
             endDate,
             search,
             filerName,
+            industry,
             limit: parseInt(limit),
             offset: parseInt(offset)
         });
@@ -250,18 +251,6 @@ app.get('/api/reports/:docId/details', async (req, res) => {
         // データベースからも情報を取得してマージ
         const dbReport = await database.getReport(docId);
 
-        // 保有割合をフォーマット（詳細が取得できた場合）
-        let formattedDetails = {};
-
-        if (details) {
-            formattedDetails = {
-                ...details,
-                holdingRatioFormatted: CsvParser.formatRatioAsPercent(details.holdingRatio),
-                previousHoldingRatioFormatted: CsvParser.formatRatioAsPercent(details.previousHoldingRatio),
-                holdingRatioChangeFormatted: CsvParser.formatRatioChange(details.holdingRatioChange)
-            };
-        }
-
         // DB情報があれば補完
         if (dbReport) {
             if (!formattedDetails.issuerName && dbReport.filer_name) {
@@ -327,6 +316,34 @@ app.get('/api/filer/:edinetCode/documents', async (req, res) => {
     }
 });
 
+/**
+ * 発行者の属性・大株主情報を取得（最新の有価証券報告書より）
+ * GET /api/issuer/:edinetCode/attributes
+ */
+app.get('/api/issuer/:edinetCode/attributes', async (req, res) => {
+    try {
+        const { edinetCode } = req.params;
+        const report = await database.getLatestAnnualReport(edinetCode);
+
+        if (!report) {
+            return res.json({ success: true, data: null, message: 'No annual report found in DB' });
+        }
+
+        console.log(`Fetching attributes for ${edinetCode} from doc ${report.doc_id}...`);
+        const result = await CsvParser.fetchAndParse(report.doc_id, 'annualReport');
+
+        if (!result) {
+            return res.json({ success: true, data: null, message: 'Failed to parse annual report' });
+        }
+
+        res.json({ success: true, data: result });
+
+    } catch (error) {
+        console.error('Error fetching issuer attributes:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // ===== Server Start =====
 
 async function startServer() {
@@ -342,10 +359,9 @@ async function startServer() {
 
         // Vercel環境では過去データ取得をスキップ（初回リクエスト時のタイムアウトを防ぐ）
         if (process.env.VERCEL !== '1') {
-            // 過去365日分のデータを取得（初回起動時）
-            console.log('Fetching historical data (past 365 days)...');
-            await fetchHistoricalData(365);
-            console.log('Historical data loaded');
+            // 過去365日分のデータを取得（初回起動時）- バックグラウンドで実行
+            console.log('Fetching historical data in background...');
+            fetchHistoricalData(30).then(() => console.log('Historical data loaded'));
         } else {
             console.log('Running on Vercel - skipping historical data fetch');
         }
@@ -358,8 +374,8 @@ async function startServer() {
             });
         }
 
-        // サーバー起動（ローカル環境のみ）
-        if (process.env.NODE_ENV !== 'production') {
+        // サーバー起動（Vercel以外で起動）
+        if (process.env.VERCEL !== '1') {
             app.listen(config.port, () => {
                 console.log(`\n🚀 EDINET Monitor Server running at http://localhost:${config.port}`);
                 console.log(`📊 API: http://localhost:${config.port}/api/reports`);
