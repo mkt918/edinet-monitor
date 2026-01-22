@@ -251,6 +251,9 @@ app.get('/api/reports/:docId/details', async (req, res) => {
         // データベースからも情報を取得してマージ
         const dbReport = await database.getReport(docId);
 
+        // detailsをベースにformattedDetailsを作成
+        const formattedDetails = details || {};
+
         // DB情報があれば補完
         if (dbReport) {
             if (!formattedDetails.issuerName && dbReport.filer_name) {
@@ -420,8 +423,8 @@ async function fetchHistoricalData(days) {
     await Promise.all(promises);
 }
 
-// ローカル環境での起動
-if (process.env.NODE_ENV !== 'production') {
+// ローカル環境での起動（Vercel以外）
+if (process.env.VERCEL !== '1') {
     startServer();
 }
 
