@@ -692,7 +692,21 @@ body {
   background: rgba(255, 215, 0, 0.3);
 }
 
-/* ===== Loading State ===== */
+/* ===== Pagination ===== */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 0;
+  width: 100%;
+}
+
+.load-more-btn {
+  min-width: 200px;
+  justify-content: center;
+  box-shadow: var(--shadow);
+}
+
 .loading {
   display: flex;
   align-items: center;
