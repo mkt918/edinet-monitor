@@ -253,8 +253,8 @@ function renderReports() {
     `;
     }).join('');
 
-    // 詳細を自動で読み込み
-    autoLoadReportDetails();
+    // 過建延込み読み込みをセットアップ（Intersection Observer）
+    setupDetailsObserver();
 
     // もっと見るボタンの表示制御
     if (elements.loadMoreContainer) {
@@ -867,43 +867,77 @@ function setupEventListeners() {
     // 現状は renderReports 内で非同期実行しているため、それを維持する（一部修正が必要）
 }
 
-// renderReports を修正して詳細読み込みロジックを分離可能にする
-async function autoLoadReportDetails() {
-    elements.reportsList.querySelectorAll('.report-details-compact').forEach(async (detailsDiv) => {
-        const docId = detailsDiv.dataset.docId;
-        if (!docId || detailsDiv.getAttribute('data-loaded') === 'true') return;
+// Intersection Observerで画面に表示されたレポートのみ詳細を取得
+let detailsObserver = null;
 
-        let details = state.detailsCache[docId];
-        if (!details) {
-            details = await fetchReportDetails(docId);
-            if (details) state.detailsCache[docId] = details;
+function setupDetailsObserver() {
+    // 既存のObserverをクリア
+    if (detailsObserver) {
+        detailsObserver.disconnect();
+    }
+
+    detailsObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const detailsDiv = entry.target;
+                loadSingleReportDetails(detailsDiv);
+                // 一度読み込んだら監視を解除
+                detailsObserver.unobserve(detailsDiv);
+            }
+        });
+    }, {
+        root: null,
+        rootMargin: '100px', // 画面の100px手前で読み込み開始
+        threshold: 0.1
+    });
+
+    // 各レポートの詳細コンテナを監視
+    elements.reportsList.querySelectorAll('.report-details-compact').forEach(detailsDiv => {
+        if (detailsDiv.getAttribute('data-loaded') !== 'true') {
+            detailsObserver.observe(detailsDiv);
+        }
+    });
+}
+
+async function loadSingleReportDetails(detailsDiv) {
+    const docId = detailsDiv.dataset.docId;
+    if (!docId || detailsDiv.getAttribute('data-loaded') === 'true') return;
+
+    let details = state.detailsCache[docId];
+    if (!details) {
+        details = await fetchReportDetails(docId);
+        if (details) state.detailsCache[docId] = details;
+    }
+
+    if (details) {
+        detailsDiv.innerHTML = renderDetailsContent(details);
+        detailsDiv.setAttribute('data-loaded', 'true');
+
+        if (details.issuerName && isInWatchlist(details.issuerName)) {
+            const reportItem = detailsDiv.closest('.report-item');
+            if (reportItem) reportItem.classList.add('highlight');
         }
 
-        if (details) {
-            detailsDiv.innerHTML = renderDetailsContent(details);
-            detailsDiv.setAttribute('data-loaded', 'true');
-
-            if (details.issuerName && isInWatchlist(details.issuerName)) {
-                const reportItem = detailsDiv.closest('.report-item');
-                if (reportItem) reportItem.classList.add('highlight');
-            }
-
-            // 属性情報
-            if (details.issuerEdinetCode) {
-                const attrContainer = detailsDiv.querySelector('.attributes-container');
-                if (attrContainer) {
-                    const result = await fetchIssuerAttributes(details.issuerEdinetCode);
-                    if (result && result.success) {
-                        attrContainer.innerHTML = renderAttributesContent(result);
-                    } else {
-                        // エラー表示
-                        const msg = (result && result.message) ? result.message : '情報取得エラー';
-                        attrContainer.innerHTML = `<span class="attr-message">${escapeHtml(msg)}</span>`;
-                    }
+        // 属性情報
+        if (details.issuerEdinetCode) {
+            const attrContainer = detailsDiv.querySelector('.attributes-container');
+            if (attrContainer) {
+                const result = await fetchIssuerAttributes(details.issuerEdinetCode);
+                if (result && result.success) {
+                    attrContainer.innerHTML = renderAttributesContent(result);
+                } else {
+                    const msg = (result && result.message) ? result.message : '情報取得エラー';
+                    attrContainer.innerHTML = `<span class="attr-message">${escapeHtml(msg)}</span>`;
                 }
             }
         }
-    });
+    }
+}
+
+// 互換性のために古い関数も残す（使用しない）
+async function autoLoadReportDetails() {
+    // 新しい実装はsetupDetailsObserver()に移行
+    setupDetailsObserver();
 }
 
 function debounce(fn, delay) {
