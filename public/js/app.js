@@ -21,7 +21,7 @@ let state = {
         dateEnd: ''
     },
     pagination: {
-        limit: 500,
+        limit: 100,
         offset: 0,
         hasMore: false
     }
@@ -195,8 +195,8 @@ async function fetchFilerDocuments(edinetCode) {
 }
 
 function renderReports() {
+    const filterText = (state.filters.search || '').toLowerCase();
     const filtered = filterReports();
-    const filterText = state.filters.search || '';
 
     if (filtered.length === 0) {
         elements.reportsList.innerHTML = `
@@ -206,17 +206,22 @@ function renderReports() {
       </div>
     `;
         elements.reportCount.textContent = '0件';
+        if (elements.loadMoreContainer) elements.loadMoreContainer.style.display = 'none';
         return;
     }
 
     elements.reportCount.textContent = `${filtered.length}件`;
 
-    elements.reportsList.innerHTML = filtered.map(report => {
-        const isWatched = isInWatchlist(report.filer_name);
-        const typeClass = getTypeClass(report.report_type);
+    // 段階的レンダリング: まず最初の50件を表示
+    const firstChunk = filtered.slice(0, 50);
+    const remainingChunk = filtered.slice(50);
 
+    const renderChunk = (reports) => {
+        return reports.map(report => {
+            const isWatched = isInWatchlist(report.filer_name);
+            const typeClass = getTypeClass(report.report_type);
 
-        return `
+            return `
       <div class="report-item ${isWatched ? 'watched' : ''}" data-doc-id="${report.doc_id}">
         <div class="report-main-info">
           <div class="report-header-row">
@@ -237,7 +242,9 @@ function renderReports() {
               ${report.sec_code ? `<span class="meta-item">🏷️ ${report.sec_code}</span>` : ''}
             </div>
           </div>
-          <div class="report-description-row">${escapeHtml(report.doc_description || '')}</div>
+          <div class="report-description-row" title="${escapeHtml(report.doc_description)}">
+            ${highlightMatch(report.doc_description, filterText)}
+          </div>
         </div>
         <div class="report-details-compact" id="details-${report.doc_id}" data-doc-id="${report.doc_id}">
           <div class="details-loading-sm">📊</div>
@@ -251,10 +258,23 @@ function renderReports() {
         </div>
       </div>
     `;
-    }).join('');
+        }).join('');
+    };
 
-    // 過建延込み読み込みをセットアップ（Intersection Observer）
-    setupDetailsObserver();
+    // 最初の50件を描画
+    elements.reportsList.innerHTML = renderChunk(firstChunk);
+
+    // 残りがある場合は非同期で描画
+    if (remainingChunk.length > 0) {
+        setTimeout(() => {
+            const range = document.createRange();
+            const fragment = range.createContextualFragment(renderChunk(remainingChunk));
+            elements.reportsList.appendChild(fragment);
+            setupDetailsObserver();
+        }, 50);
+    } else {
+        setupDetailsObserver();
+    }
 
     // もっと見るボタンの表示制御
     if (elements.loadMoreContainer) {
@@ -569,7 +589,7 @@ async function loadReports() {
     state.pagination.offset = 0;
     state.pagination.hasMore = false;
 
-    // 日付範囲指定時は1000件、それ以外は500件
+    // 日付指定時は多めに取得（上限1000件）、通常時はデフォルト(100)
     const limit = (state.filters.dateStart || state.filters.dateEnd) ? 1000 : state.pagination.limit;
 
     // 現在のフィルター条件でAPIから取得
