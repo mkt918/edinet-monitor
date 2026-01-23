@@ -704,7 +704,7 @@ function setupEventListeners() {
     // 監視対象のみフィルター
     elements.watchedOnlyFilter.addEventListener('change', (e) => {
         state.filters.watchedOnly = e.target.checked;
-        renderReports();
+        loadReports(); // APIからお気に入り対象のみを取得
     });
 
     // 定款変更のみフィルター
@@ -732,6 +732,7 @@ function setupEventListeners() {
             articlesOnly: false
         };
         renderReports();
+        loadReports(); // フィルタークリア後に再取得して全件表示に戻す
     });
 
     // 更新ボタン
