@@ -592,6 +592,18 @@ async function loadReports() {
     // 日付指定時は多めに取得（上限1000件）、通常時はデフォルト(100)
     const limit = (state.filters.dateStart || state.filters.dateEnd) ? 1000 : state.pagination.limit;
 
+    // お気に入りのみフィルターがONの場合は、ウォッチリストの名前を渡す
+    let filerNames = null;
+    if (state.filters.watchedOnly && state.watchlist.length > 0) {
+        filerNames = state.watchlist.map(w => w.name).join(',');
+    } else if (state.filters.watchedOnly) {
+        // お気に入りフィルターがONだが、リストが空の場合は結果を空にする
+        state.reports = [];
+        state.pagination.hasMore = false;
+        renderReports();
+        return;
+    }
+
     // 現在のフィルター条件でAPIから取得
     const reports = await fetchReports({
         startDate: state.filters.dateStart,
@@ -599,6 +611,7 @@ async function loadReports() {
         search: state.filters.search,
         industry: state.filters.industry,
         type: state.filters.type,
+        filerNames: filerNames,
         limit: limit,
         offset: 0
     });

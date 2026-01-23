@@ -227,7 +227,7 @@ class DatabaseService {
      * @param {Object} options - 検索オプション
      * @returns {Array} 報告書一覧
      */
-    async getReports({ date, startDate, endDate, search, filerName, industry, reportType, limit = 100, offset = 0 } = {}) {
+    async getReports({ date, startDate, endDate, search, filerName, filerNames, industry, reportType, limit = 100, offset = 0 } = {}) {
         try {
             let query = this.supabase
                 .from('reports')
@@ -246,6 +246,10 @@ class DatabaseService {
 
             if (filerName) {
                 query = query.ilike('filer_name', `%${filerName}%`);
+            }
+
+            if (filerNames && Array.isArray(filerNames) && filerNames.length > 0) {
+                query = query.in('filer_name', filerNames);
             }
 
             if (search) {

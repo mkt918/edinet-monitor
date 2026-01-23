@@ -47,13 +47,18 @@ app.use(async (req, res, next) => {
  */
 app.get('/api/reports', async (req, res) => {
     try {
-        const { date, startDate, endDate, search, filerName, industry, type, limit = 100, offset = 0 } = req.query;
+        const { date, startDate, endDate, search, filerName, industry, type, limit = 100, offset = 0, filerNames } = req.query;
+
+        // filerNames が文字列（カンマ区切り）で来ることを想定して配列に変換
+        const namesArray = filerNames ? filerNames.split(',').filter(n => n.trim() !== '') : null;
+
         const reports = await database.getReports({
             date,
             startDate,
             endDate,
             search,
             filerName,
+            filerNames: namesArray,
             industry,
             reportType: type,
             limit: parseInt(limit),
