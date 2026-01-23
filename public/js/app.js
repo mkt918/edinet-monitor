@@ -57,7 +57,11 @@ const elements = {
     dashboardTitle: document.getElementById('dashboardTitle'),
     dashboardDocsList: document.getElementById('dashboardDocsList'),
     linkGoogleFinance: document.getElementById('linkGoogleFinance'),
-    linkYahooFinance: document.getElementById('linkYahooFinance')
+    linkGoogleFinance: document.getElementById('linkGoogleFinance'),
+    linkYahooFinance: document.getElementById('linkYahooFinance'),
+    // 詳細検索
+    toggleAdvancedSearchBtn: document.getElementById('toggleAdvancedSearchBtn'),
+    filterAdvanced: document.getElementById('filterAdvanced')
 };
 
 // ===== API Functions =====
@@ -134,6 +138,22 @@ async function fetchReportDetails(docId) {
     }
 }
 
+async function fetchIssuerAttributes(edinetCode) {
+    if (!edinetCode) return { success: false, message: 'EDINETコード不明' };
+
+    try {
+        const response = await fetch(`${API_BASE}/api/issuer/${encodeURIComponent(edinetCode)}/attributes`);
+        if (!response.ok) {
+            return { success: false, message: `取得エラー (${response.status})` };
+        }
+        const data = await response.json();
+        return data;
+    } catch (e) {
+        console.error('Error fetching attributes:', e);
+        return { success: false, message: '通信エラー' };
+    }
+}
+
 // ===== Render Functions =====
 
 function renderStats() {
@@ -204,11 +224,10 @@ function renderReports() {
               <a href="#" class="report-filer issuer-link" 
                  data-edinet-code="${escapeHtml(report.edinet_code)}" 
                  data-issuer-name="${escapeHtml(report.filer_name)}"
-                 data-type="filer" 
-                 onclick="event.stopPropagation()">
+                 data-type="filer">
                  ${highlightMatch(report.filer_name, filterText)}
               </a>
-              <button class="action-btn action-watch ${isWatched ? 'watched' : ''} btn-filer-favorite" data-name="${escapeHtml(report.filer_name)}" title="${isWatched ? 'お気に入り' : 'お気に入りに追加'}" onclick="event.stopPropagation()">
+              <button class="action-btn action-watch ${isWatched ? 'watched' : ''} btn-filer-favorite" data-name="${escapeHtml(report.filer_name)}" title="${isWatched ? 'お気に入り' : 'お気に入りに追加'}">
                 ${isWatched ? '⭐' : '☆'}
               </button>
               <span class="report-type ${typeClass}">${escapeHtml(report.report_type || '大量保有報告書')}</span>
@@ -234,103 +253,8 @@ function renderReports() {
     `;
     }).join('');
 
-    // イベント登録
-    // 監視ボタン
-    elements.reportsList.querySelectorAll('.action-watch').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const name = btn.dataset.name;
-            await addWatchlistItem(name);
-            await loadWatchlist();
-            renderReports();
-        });
-    });
-
-    elements.reportsList.querySelectorAll('.action-pdf').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const docId = btn.dataset.docId;
-            window.open(`/api/document/${docId}`, '_blank');
-        });
-    });
-
-    // 変更報告者リンク（リストヘッダー内）
-    elements.reportsList.querySelectorAll('.report-header-row .issuer-link').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const edinetCode = link.dataset.edinetCode;
-            const issuerName = link.dataset.issuerName;
-            const type = link.dataset.type || 'filer';
-
-            if (edinetCode) {
-                openDashboardV2(edinetCode, issuerName, null, type);
-            } else {
-                window.open(`https://www.google.com/search?q=${encodeURIComponent(issuerName)}`, '_blank');
-            }
-        });
-    });
-
     // 詳細を自動で読み込み
-    elements.reportsList.querySelectorAll('.report-details-compact').forEach(async (detailsDiv) => {
-        const docId = detailsDiv.dataset.docId;
-        if (!docId) return;
-
-        // キャッシュをチェック
-        let details = state.detailsCache[docId];
-
-        // キャッシュになければAPIから取得
-        if (!details) {
-            details = await fetchReportDetails(docId);
-            if (details) {
-                state.detailsCache[docId] = details; // キャッシュに保存
-            }
-        }
-
-        if (details) {
-            detailsDiv.innerHTML = renderDetailsContent(details);
-
-            // 発行者名が監視対象に含まれている場合、親要素を強調表示
-            if (details.issuerName && isInWatchlist(details.issuerName)) {
-                const reportItem = detailsDiv.closest('.report-item');
-                if (reportItem && !reportItem.classList.contains('highlight')) {
-                    reportItem.classList.add('highlight');
-                    reportItem.setAttribute('data-watch-reason', '発行者が監視対象');
-                }
-            }
-
-            const addIssuerBtn = detailsDiv.querySelector('.btn-add-issuer-watch');
-            if (addIssuerBtn) {
-                addIssuerBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const issuerName = addIssuerBtn.dataset.issuer;
-                    if (issuerName) {
-                        await addWatchlistItem(issuerName);
-                        await loadWatchlist();
-                        renderReports();
-                    }
-                });
-            }
-
-            // 属性情報の取得と表示
-            if (details.issuerEdinetCode || details.issuerName) {
-                const edinetCode = details.issuerEdinetCode;
-                // コンテナを探す
-                const attrContainer = detailsDiv.querySelector('.attributes-container');
-                if (attrContainer && edinetCode) {
-                    fetchIssuerAttributes(edinetCode).then(attrs => {
-                        if (attrs) {
-                            attrContainer.innerHTML = renderAttributesContent(attrs);
-                        } else {
-                            attrContainer.innerHTML = '<span class="attr-tag">属性情報なし</span>';
-                        }
-                    });
-                }
-            }
-        } else {
-            detailsDiv.innerHTML = '<div class="details-error">詳細情報を取得できませんでした</div>';
-        }
-    });
+    autoLoadReportDetails();
 
     // もっと見るボタンの表示制御
     if (elements.loadMoreContainer) {
@@ -424,16 +348,7 @@ function isInWatchlist(filerName) {
 /**
  * 詳細情報をHTMLにレンダリング
  */
-async function fetchIssuerAttributes(edinetCode) {
-    try {
-        const response = await fetch(`${API_BASE}/api/issuer/${edinetCode}/attributes`);
-        const data = await response.json();
-        return data.success ? data.data : null;
-    } catch (e) {
-        console.error('Error fetching attributes:', e);
-        return null;
-    }
-}
+
 
 /**
  * 詳細情報をHTMLにレンダリング
@@ -455,8 +370,7 @@ function renderDetailsContent(details) {
                        data-edinet-code="${details.issuerEdinetCode || ''}"
                        data-issuer-name="${escapeHtml(details.issuerName)}"
                        data-sec-code="${escapeHtml(details.securityCode || '')}"
-                       data-type="issuer"
-                       onclick="event.stopPropagation()">
+                       data-type="issuer">
                        ${escapeHtml(details.issuerName || '-')}
                     </a>
                     ${details.issuerName && !isIssuerWatched ? `
@@ -503,35 +417,70 @@ function renderDetailsContent(details) {
     `;
 }
 
-function renderAttributesContent(attrs) {
+function renderAttributesContent(result) {
+    if (!result) return '';
+
+    let html = `<div class="attributes-box">`;
+
+    if (!result.data && result.message) {
+        html += `<span class="attr-message">${escapeHtml(result.message)}</span></div>`;
+        return html;
+    }
+
+    const attrs = result.data;
     if (!attrs) return '';
 
-    let html = `
-        <div class="attributes-box">
-            <div class="attr-header">
-                <span class="attr-label">属性:</span>
-                <span class="attr-badge">${escapeHtml(attrs.attribute)}</span>
-            </div>
-    `;
-
+    // 大株主の表示ロジック変更: 1位のみ表示、残りはアコーディオン
     if (attrs.shareholders && attrs.shareholders.length > 0) {
-        html += `<div class="shareholders-mini-list">`;
-        attrs.shareholders.forEach(h => {
-            // 5%以上なら赤字、など
-            html += `
-                <div class="shareholder-mini-item">
-                    <span class="sh-rank">${h.rank}.</span>
-                    <span class="sh-name" title="${escapeHtml(h.name)}">${escapeHtml(h.name)}</span>
-                    <span class="sh-ratio">${(h.ratio * 100).toFixed(1)}%</span>
-                </div>
+        // 1位を表示
+        const top = attrs.shareholders[0];
+        html += `
+            <div class="shareholder-top-rank">
+                <span class="sh-rank">1.</span>
+                <span class="sh-name" title="${escapeHtml(top.name)}">${escapeHtml(top.name)}</span>
+                <span class="sh-ratio">${(top.ratio * 100).toFixed(1)}%</span>
+            </div>
         `;
-        });
-        html += `</div>`;
+
+        // 2位以下がある場合
+        if (attrs.shareholders.length > 1) {
+            html += `
+                <button class="btn-toggle-shareholders" onclick="toggleShareholders(this)">
+                    ▼ 他の大株主を見る (${attrs.shareholders.length - 1}件)
+                </button>
+                <div class="shareholders-hidden-list" style="display:none;">
+            `;
+
+            attrs.shareholders.slice(1).forEach(h => {
+                html += `
+                    <div class="shareholder-mini-item">
+                        <span class="sh-rank">${h.rank}.</span>
+                        <span class="sh-name" title="${escapeHtml(h.name)}">${escapeHtml(h.name)}</span>
+                        <span class="sh-ratio">${(h.ratio * 100).toFixed(1)}%</span>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+        }
+    } else {
+        html += `<span class="attr-message">大株主情報なし</span>`;
     }
 
     html += `</div>`;
     return html;
 }
+
+// グローバルスコープに関数を公開（HTML内のonclickから呼ぶため）
+window.toggleShareholders = function (btn) {
+    const container = btn.nextElementSibling;
+    if (!container) return;
+
+    const isHidden = container.style.display === 'none';
+    container.style.display = isHidden ? 'block' : 'none';
+    btn.textContent = isHidden ? '▲ 閉じる' : `▼ 他の大株主を見る (${container.children.length}件)`;
+    btn.classList.toggle('active', isHidden);
+};
 
 // ===== Helper Functions =====
 
@@ -739,6 +688,19 @@ function setupEventListeners() {
     // 更新ボタン
     elements.refreshBtn.addEventListener('click', refreshAll);
 
+    // 詳細検索トグル
+    if (elements.toggleAdvancedSearchBtn) {
+        elements.toggleAdvancedSearchBtn.addEventListener('click', () => {
+            const isHidden = elements.filterAdvanced.style.display === 'none';
+            elements.filterAdvanced.style.display = isHidden ? 'block' : 'none';
+            // アイコン切り替え
+            const icon = elements.toggleAdvancedSearchBtn.querySelector('.btn-icon');
+            if (icon) icon.textContent = isHidden ? '🔼' : '⚙️';
+        });
+    }
+
+
+
     // クイックフィルター
     document.querySelectorAll('.quick-filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -831,6 +793,116 @@ function setupEventListeners() {
     if (elements.loadMoreBtn) {
         elements.loadMoreBtn.addEventListener('click', loadMoreReports);
     }
+
+    // --- レポートリスト内のイベント委譲 ---
+
+    // レポート項目クリック（詳細の開閉）
+    elements.reportsList.addEventListener('click', (e) => {
+        const reportItem = e.target.closest('.report-item');
+        if (!reportItem) return;
+
+        // PDFボタンや削除ボタン、リンクなどは除外
+        if (e.target.closest('.action-btn') || e.target.closest('.issuer-link')) {
+            return;
+        }
+
+        const docId = reportItem.dataset.docId;
+        const detailsItem = document.getElementById(`details-${docId}`);
+        if (detailsItem) {
+            detailsItem.classList.toggle('active');
+            reportItem.classList.toggle('expanded');
+        }
+    });
+
+    // リンク・ボタンの委譲
+    elements.reportsList.addEventListener('click', async (e) => {
+        // 1. お気に入りボタン
+        const watchBtn = e.target.closest('.action-watch, .btn-add-issuer-watch');
+        if (watchBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const name = watchBtn.dataset.name || watchBtn.dataset.issuer;
+            if (name) {
+                await addWatchlistItem(name);
+                await loadWatchlist();
+                renderReports();
+            }
+            return;
+        }
+
+        // 2. PDFボタン
+        const pdfBtn = e.target.closest('.action-pdf-sm, .action-pdf-text');
+        if (pdfBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            const docId = pdfBtn.dataset.docId;
+            if (docId) {
+                window.open(`/api/document/${docId}`, '_blank');
+            }
+            return;
+        }
+
+        // 3. 発行者リンク (ダッシュボード)
+        const issuerLink = e.target.closest('.issuer-link');
+        if (issuerLink) {
+            e.preventDefault();
+            e.stopPropagation();
+            const edinetCode = issuerLink.dataset.edinetCode;
+            const issuerName = issuerLink.dataset.issuerName;
+            const secCode = issuerLink.dataset.secCode;
+            const type = issuerLink.dataset.type || 'filer';
+
+            if (edinetCode) {
+                openDashboardV2(edinetCode, issuerName, secCode, type);
+            } else {
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(issuerName)}`, '_blank');
+            }
+            return;
+        }
+    });
+
+    // リスト内の詳細自動読み込みは renderReports 直後に行う必要があるため
+    // renderReports 内に一部ロジックを残すか、MutationObserver を使う
+    // 現状は renderReports 内で非同期実行しているため、それを維持する（一部修正が必要）
+}
+
+// renderReports を修正して詳細読み込みロジックを分離可能にする
+async function autoLoadReportDetails() {
+    elements.reportsList.querySelectorAll('.report-details-compact').forEach(async (detailsDiv) => {
+        const docId = detailsDiv.dataset.docId;
+        if (!docId || detailsDiv.getAttribute('data-loaded') === 'true') return;
+
+        let details = state.detailsCache[docId];
+        if (!details) {
+            details = await fetchReportDetails(docId);
+            if (details) state.detailsCache[docId] = details;
+        }
+
+        if (details) {
+            detailsDiv.innerHTML = renderDetailsContent(details);
+            detailsDiv.setAttribute('data-loaded', 'true');
+
+            if (details.issuerName && isInWatchlist(details.issuerName)) {
+                const reportItem = detailsDiv.closest('.report-item');
+                if (reportItem) reportItem.classList.add('highlight');
+            }
+
+            // 属性情報
+            if (details.issuerEdinetCode) {
+                const attrContainer = detailsDiv.querySelector('.attributes-container');
+                if (attrContainer) {
+                    const result = await fetchIssuerAttributes(details.issuerEdinetCode);
+                    if (result && result.success) {
+                        attrContainer.innerHTML = renderAttributesContent(result);
+                    } else {
+                        // エラー表示
+                        const msg = (result && result.message) ? result.message : '情報取得エラー';
+                        attrContainer.innerHTML = `<span class="attr-message">${escapeHtml(msg)}</span>`;
+                    }
+                }
+            }
+        }
+    });
 }
 
 function debounce(fn, delay) {

@@ -271,6 +271,17 @@ app.get('/api/reports/:docId/details', async (req, res) => {
             if (!formattedDetails.securityCode) formattedDetails.securityCode = dbReport.sec_code;
         }
 
+        // 数値のフォーマット
+        if (formattedDetails.holdingRatio !== undefined) {
+            formattedDetails.holdingRatioFormatted = CsvParser.formatRatioAsPercent(formattedDetails.holdingRatio);
+        }
+        if (formattedDetails.previousHoldingRatio !== undefined) {
+            formattedDetails.previousHoldingRatioFormatted = CsvParser.formatRatioAsPercent(formattedDetails.previousHoldingRatio);
+        }
+        if (formattedDetails.holdingRatioChange !== undefined) {
+            formattedDetails.holdingRatioChangeFormatted = CsvParser.formatRatioChange(formattedDetails.holdingRatioChange);
+        }
+
         if (!details && !dbReport) {
             return res.status(404).json({
                 success: false,
@@ -329,14 +340,14 @@ app.get('/api/issuer/:edinetCode/attributes', async (req, res) => {
         const report = await database.getLatestAnnualReport(edinetCode);
 
         if (!report) {
-            return res.json({ success: true, data: null, message: 'No annual report found in DB' });
+            return res.json({ success: true, data: null, message: '有価証券報告書が提出されていません（順次蓄積中）' });
         }
 
         console.log(`Fetching attributes for ${edinetCode} from doc ${report.doc_id}...`);
         const result = await CsvParser.fetchAndParse(report.doc_id, 'annualReport');
 
         if (!result) {
-            return res.json({ success: true, data: null, message: 'Failed to parse annual report' });
+            return res.json({ success: true, data: null, message: '報告書の解析に失敗しました（非標準形式など）' });
         }
 
         res.json({ success: true, data: result });

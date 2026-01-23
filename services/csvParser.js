@@ -246,10 +246,10 @@ export class CsvParser {
         // ユーザー要望では「属性がわかる」のが重要なので、ブラックリスト除外後のトップ3を優先表示するか、
         // あるいは生のトップ3を表示しつつ属性は別途出すか。
         // 「大株主トップ3が即座に見える化」「マスター信託とか自社株会とかはいらん」とのことなので、
-        // 除外後のトップ3を返す。
+        // 除外後のトップ5を返す。
 
         return {
-            shareholders: attributeShareholders.slice(0, 3), // 除外後のトップ3
+            shareholders: attributeShareholders.slice(0, 5), // 除外後のトップ5
             attribute: attribute
         };
     }

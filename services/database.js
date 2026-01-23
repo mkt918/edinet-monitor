@@ -249,7 +249,8 @@ class DatabaseService {
             }
 
             if (search) {
-                query = query.or(`filer_name.ilike.%${search}%,doc_description.ilike.%${search}%`);
+                // 提出者名、書類名、証券コード、EDINETコード、発行者/対象EDINETコードで検索
+                query = query.or(`filer_name.ilike.%${search}%,doc_description.ilike.%${search}%,sec_code.ilike.%${search}%,edinet_code.ilike.%${search}%,issuer_edinet_code.ilike.%${search}%,subject_edinet_code.ilike.%${search}%`);
             }
 
             if (industry) {

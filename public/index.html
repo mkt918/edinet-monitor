@@ -46,70 +46,94 @@
       <!-- フィルター -->
       <section class="filter-section">
         <div class="filter-bar">
-          <div class="quick-filters">
-            <button class="quick-filter-btn" data-range="today">今日</button>
-            <button class="quick-filter-btn" data-range="week">今週</button>
-            <button class="quick-filter-btn" data-range="month">今月</button>
-            <button class="quick-filter-btn active" data-range="all">全て</button>
+          <!-- 常に表示される簡易フィルター -->
+          <div class="filter-header">
+            <div class="quick-filters">
+              <button class="quick-filter-btn" data-range="today">今日</button>
+              <button class="quick-filter-btn" data-range="week">今週</button>
+              <button class="quick-filter-btn" data-range="month">今月</button>
+              <button class="quick-filter-btn active" data-range="all">全て</button>
+            </div>
+
+            <div class="search-group">
+              <input type="text" id="searchFilter" class="filter-input filter-input-sm" placeholder="🔍 提出者名...">
+              <button id="toggleAdvancedSearchBtn" class="btn btn-secondary btn-sm">
+                <span class="btn-icon">⚙️</span>
+                詳細検索
+              </button>
+            </div>
           </div>
-          <div class="filter-inputs">
-            <input type="date" id="dateFilterStart" class="filter-input filter-input-sm" placeholder="開始日">
-            <span class="filter-separator">〜</span>
-            <input type="date" id="dateFilterEnd" class="filter-input filter-input-sm" placeholder="終了日">
-            <input type="text" id="searchFilter" class="filter-input filter-input-sm" placeholder="🔍 提出者名で検索...">
-            <select id="typeFilter" class="filter-select filter-select-sm">
-              <option value="">全ての報告書</option>
-              <option value="大量保有報告書">大量保有報告書</option>
-              <option value="変更報告書">変更報告書</option>
-              <option value="訂正報告書">訂正報告書</option>
-            </select>
-            <select id="industryFilter" class="filter-select filter-select-sm" style="max-width: 150px;">
-              <option value="">全ての業種</option>
-              <option value="水産・農林業">水産・農林業</option>
-              <option value="鉱業">鉱業</option>
-              <option value="建設業">建設業</option>
-              <option value="食料品">食料品</option>
-              <option value="繊維製品">繊維製品</option>
-              <option value="パルプ・紙">パルプ・紙</option>
-              <option value="化学">化学</option>
-              <option value="医薬品">医薬品</option>
-              <option value="石油・石炭製品">石油・石炭製品</option>
-              <option value="ゴム製品">ゴム製品</option>
-              <option value="ガラス・土石製品">ガラス・土石製品</option>
-              <option value="鉄鋼">鉄鋼</option>
-              <option value="非鉄金属">非鉄金属</option>
-              <option value="金属製品">金属製品</option>
-              <option value="機械">機械</option>
-              <option value="電気機器">電気機器</option>
-              <option value="輸送用機器">輸送用機器</option>
-              <option value="精密機器">精密機器</option>
-              <option value="その他製品">その他製品</option>
-              <option value="電気・ガス業">電気・ガス業</option>
-              <option value="陸運業">陸運業</option>
-              <option value="海運業">海運業</option>
-              <option value="空運業">空運業</option>
-              <option value="倉庫・運輸関連業">倉庫・運輸関連業</option>
-              <option value="情報・通信業">情報・通信業</option>
-              <option value="卸売業">卸売業</option>
-              <option value="小売業">小売業</option>
-              <option value="銀行業">銀行業</option>
-              <option value="証券、商品先物取引業">証券・商品先物</option>
-              <option value="保険業">保険業</option>
-              <option value="その他金融業">その他金融業</option>
-              <option value="不動産業">不動産業</option>
-              <option value="サービス業">サービス業</option>
-            </select>
-            <label class="filter-checkbox">
-              <input type="checkbox" id="watchedOnlyFilter">
-              <span>お気に入り</span>
-            </label>
-            <label class="filter-checkbox">
-              <input type="checkbox" id="articlesOnlyFilter">
-              <span>定款変更のみ</span>
-            </label>
-            <button id="clearFiltersBtn" class="btn btn-secondary btn-sm">
-              <span class="btn-icon">✕</span>
-            </button>
+
+          <!-- 詳細フィルター（デフォルト非表示） -->
+          <div class="filter-advanced" id="filterAdvanced" style="display: none;">
+            <div class="filter-row">
+              <div class="date-group">
+                <label>期間指定:</label>
+                <input type="date" id="dateFilterStart" class="filter-input filter-input-sm">
+                <span class="filter-separator">〜</span>
+                <input type="date" id="dateFilterEnd" class="filter-input filter-input-sm">
+              </div>
+            </div>
+
+            <div class="filter-row">
+              <select id="typeFilter" class="filter-select filter-select-sm">
+                <option value="">全ての報告書</option>
+                <option value="有価証券報告書">有価証券報告書</option>
+                <option value="大量保有報告書">大量保有報告書</option>
+                <option value="変更報告書">変更報告書</option>
+                <option value="訂正報告書">訂正報告書</option>
+              </select>
+              <select id="industryFilter" class="filter-select filter-select-sm">
+                <option value="">全ての業種</option>
+                <option value="水産・農林業">水産・農林業</option>
+                <option value="鉱業">鉱業</option>
+                <option value="建設業">建設業</option>
+                <option value="食料品">食料品</option>
+                <option value="繊維製品">繊維製品</option>
+                <option value="パルプ・紙">パルプ・紙</option>
+                <option value="化学">化学</option>
+                <option value="医薬品">医薬品</option>
+                <option value="石油・石炭製品">石油・石炭製品</option>
+                <option value="ゴム製品">ゴム製品</option>
+                <option value="ガラス・土石製品">ガラス・土石製品</option>
+                <option value="鉄鋼">鉄鋼</option>
+                <option value="非鉄金属">非鉄金属</option>
+                <option value="金属製品">金属製品</option>
+                <option value="機械">機械</option>
+                <option value="電気機器">電気機器</option>
+                <option value="輸送用機器">輸送用機器</option>
+                <option value="精密機器">精密機器</option>
+                <option value="その他製品">その他製品</option>
+                <option value="電気・ガス業">電気・ガス業</option>
+                <option value="陸運業">陸運業</option>
+                <option value="海運業">海運業</option>
+                <option value="空運業">空運業</option>
+                <option value="倉庫・運輸関連業">倉庫・運輸関連業</option>
+                <option value="情報・通信業">情報・通信業</option>
+                <option value="卸売業">卸売業</option>
+                <option value="小売業">小売業</option>
+                <option value="銀行業">銀行業</option>
+                <option value="証券、商品先物取引業">証券・商品先物</option>
+                <option value="保険業">保険業</option>
+                <option value="その他金融業">その他金融業</option>
+                <option value="不動産業">不動産業</option>
+                <option value="サービス業">サービス業</option>
+              </select>
+            </div>
+
+            <div class="filter-row">
+              <label class="filter-checkbox">
+                <input type="checkbox" id="watchedOnlyFilter">
+                <span>お気に入り</span>
+              </label>
+              <label class="filter-checkbox">
+                <input type="checkbox" id="articlesOnlyFilter">
+                <span>定款変更のみ</span>
+              </label>
+              <button id="clearFiltersBtn" class="btn btn-secondary btn-sm" style="margin-left: auto;">
+                <span class="btn-icon">✕</span> 条件クリア
+              </button>
+            </div>
           </div>
         </div>
       </section>
