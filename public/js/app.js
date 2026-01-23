@@ -359,7 +359,10 @@ function renderDetailsContent(details) {
                        data-type="issuer">
                        ${escapeHtml(details.issuerName || '-')}
                     </a>
-                    <button class="action-btn action-watch ${isIssuerWatched ? 'watched' : ''} btn-add-issuer-watch" data-issuer="${escapeHtml(details.issuerName)}" title="${isIssuerWatched ? 'お気に入り' : 'お気に入りに追加'}">
+                    <button class="action-btn action-watch ${isIssuerWatched ? 'watched' : ''} btn-add-issuer-watch" 
+                            data-name="${escapeHtml(details.issuerName)}" 
+                            title="${isIssuerWatched ? 'お気に入り' : 'お気に入りに追加'}"
+                            style="font-size: 1.2rem; background: none; border: none; padding: 0; margin-left: 4px; display: inline-flex; align-items: center; vertical-align: middle;">
                         ${isIssuerWatched ? '⭐' : '☆'}
                     </button>
                 </div>
@@ -838,7 +841,8 @@ function setupEventListeners() {
             if (name) {
                 const isCurrentlyWatched = isInWatchlist(name);
                 if (isCurrentlyWatched) {
-                    const item = state.watchlist.find(w => name.includes(w.name));
+                    // 名前が含まれる監視対象を探して削除
+                    const item = state.watchlist.find(w => name === w.name || name.includes(w.name) || w.name.includes(name));
                     if (item) await removeWatchlistItem(item.id);
                 } else {
                     await addWatchlistItem(name);

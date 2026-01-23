@@ -1,24 +1,28 @@
 /* ===== CSS Variables ===== */
 :root {
-  --color-bg: #0f0f1a;
-  --color-bg-light: #1a1a2e;
-  --color-bg-card: rgba(30, 30, 50, 0.8);
-  --color-border: rgba(255, 255, 255, 0.1);
-  --color-text: #e0e0e0;
-  --color-text-muted: #888;
-  --color-primary: #6c5ce7;
-  --color-primary-light: #a29bfe;
-  --color-secondary: #00cec9;
-  --color-accent: #fd79a8;
-  --color-success: #00b894;
-  --color-warning: #fdcb6e;
-  --color-danger: #e17055;
+  --color-bg: #faf7f2;
+  /* Improved Cream background */
+  --color-bg-light: #f0ede6;
+  --color-bg-card: #ffffff;
+  --color-border: #dcd6cb;
+  /* Slightly darker border for contrast */
+  --color-text: #1d2121;
+  /* Slightly darker text */
+  --color-text-muted: #535c5c;
+  --color-primary: #5849c4;
+  /* Slightly deeper primary */
+  --color-primary-light: #7a6de6;
+  --color-secondary: #00a884;
+  --color-accent: #d63384;
+  --color-success: #00a884;
+  --color-warning: #e1b12c;
+  --color-danger: #c0392b;
 
   --font-family: 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
   --border-radius: 12px;
   --border-radius-sm: 8px;
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ===== Reset ===== */
@@ -319,7 +323,7 @@ body {
 .details-group-metrics,
 .details-row-purpose {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   align-items: center;
   flex-wrap: wrap;
 }
@@ -430,7 +434,9 @@ body {
 }
 
 .report-item.watched {
-  background: rgba(255, 215, 0, 0.05);
+  background: #fffdf5;
+  /* Subtle yellow tint for watched items */
+  border-left: 4px solid var(--color-primary);
 }
 
 .report-main-info {
@@ -464,6 +470,34 @@ body {
   flex: 1 1 auto;
   min-width: 200px;
   max-width: 100%;
+}
+
+.btn-filer-favorite,
+.btn-add-issuer-watch {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  font-size: 1.1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s;
+}
+
+.btn-filer-favorite:hover,
+.btn-add-issuer-watch:hover {
+  transform: scale(1.2);
+}
+
+.btn-filer-favorite {
+  color: var(--color-text-muted);
+}
+
+.btn-filer-favorite.watched,
+.btn-add-issuer-watch.watched {
+  color: #f1c40f;
+  /* Gold Star */
 }
 
 .watch-star {
@@ -595,7 +629,7 @@ body {
 
 .report-meta-inline {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
   flex-shrink: 0;
   flex-wrap: wrap;
 }
