@@ -21,7 +21,7 @@ let state = {
         dateEnd: ''
     },
     pagination: {
-        limit: 100,
+        limit: 500,
         offset: 0,
         hasMore: false
     }
@@ -555,7 +555,8 @@ async function loadReports() {
     state.pagination.offset = 0;
     state.pagination.hasMore = false;
 
-    const limit = state.pagination.limit;
+    // 日付範囲指定時は1000件、それ以外は500件
+    const limit = (state.filters.dateStart || state.filters.dateEnd) ? 1000 : state.pagination.limit;
 
     // 現在のフィルター条件でAPIから取得
     const reports = await fetchReports({
