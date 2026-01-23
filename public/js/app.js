@@ -221,7 +221,6 @@ function renderReports() {
         <div class="report-main-info">
           <div class="report-header-row">
             <div class="report-filer-section">
-              ${isWatched ? '<span class="watch-star">⭐</span>' : ''}
               <a href="#" class="report-filer issuer-link" 
                  data-edinet-code="${escapeHtml(report.edinet_code)}" 
                  data-issuer-name="${escapeHtml(report.filer_name)}"
@@ -360,9 +359,9 @@ function renderDetailsContent(details) {
                        data-type="issuer">
                        ${escapeHtml(details.issuerName || '-')}
                     </a>
-                    ${details.issuerName && !isIssuerWatched ? `
-                        <button class="btn-add-issuer-watch" data-issuer="${escapeHtml(details.issuerName)}" title="発行者をお気に入りに追加">⭐</button>
-                    ` : ''}
+                    <button class="action-btn action-watch ${isIssuerWatched ? 'watched' : ''} btn-add-issuer-watch" data-issuer="${escapeHtml(details.issuerName)}" title="${isIssuerWatched ? 'お気に入り' : 'お気に入りに追加'}">
+                        ${isIssuerWatched ? '⭐' : '☆'}
+                    </button>
                 </div>
                 <div class="detail-item-inline">
                     <span class="detail-label">🏷️ 証券コード</span>
@@ -396,12 +395,36 @@ function renderDetailsContent(details) {
             </div>
             ` : ''}
         </div>
-        
-        <!-- 属性情報・大株主 -->
-        <div class="attributes-container">
-            <div class="loading-xs">属性確認中...</div>
-        </div>
     `;
+}
+
+/**
+ * ダッシュボード用の属性情報レンダリング（アコーディオンなし）
+ */
+function renderDashboardAttributes(result) {
+    if (!result || !result.data) return '';
+    const attrs = result.data;
+
+    let html = `<div class="attributes-box dashboard-view">`;
+
+    if (attrs.shareholders && attrs.shareholders.length > 0) {
+        html += `
+            <div class="shareholders-list-plain">
+                ${attrs.shareholders.map((sh, idx) => `
+                    <div class="shareholder-item-plain">
+                        <span class="sh-rank">${idx + 1}.</span>
+                        <span class="sh-name">${escapeHtml(sh.name)}</span>
+                        <span class="sh-ratio">${(sh.ratio * 100).toFixed(1)}%</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } else {
+        html += `<p class="empty-state-text">大株主データが見つかりません</p>`;
+    }
+
+    html += `</div>`;
+    return html;
 }
 
 function renderAttributesContent(result) {
@@ -634,7 +657,7 @@ function setupEventListeners() {
 
     elements.typeFilter.addEventListener('change', (e) => {
         state.filters.type = e.target.value;
-        renderReports();
+        loadReports(); // APIから再取得（サーバーサイドフィルタを確実に適用）
     });
 
     elements.industryFilter.addEventListener('change', (e) => {
@@ -995,7 +1018,7 @@ async function openDashboardV2(edinetCode, issuerName, secCode, type = 'issuer')
         dashboardMeta.innerHTML = `
             <div class="dashboard-shareholders">
                 <h3 class="dashboard-section-title">主要な株主</h3>
-                ${renderAttributesContent(attrResult)}
+                ${renderDashboardAttributes(attrResult)}
             </div>
         `;
     } else {
