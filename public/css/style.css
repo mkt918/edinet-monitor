@@ -438,6 +438,16 @@ body {
   min-width: 0;
 }
 
+.report-type.large-shareholding {
+  background: var(--color-primary);
+  color: white;
+}
+
+.report-type.change {
+  background: #ff7675;
+  color: white;
+}
+
 .report-header-row {
   display: flex;
   justify-content: space-between;
@@ -1397,4 +1407,24 @@ body {
   padding: 8px;
   background: rgba(0, 0, 0, 0.1);
   border-radius: 6px;
+}
+
+/* Dashboard Enhancement */
+.dashboard-meta-section {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+  border: 1px solid var(--color-border);
+}
+
+.dashboard-shareholders .dashboard-section-title {
+  margin-bottom: 1.25rem;
+  font-size: 1.2rem;
+}
+
+.dashboard-shareholders .attributes-box {
+  background: none;
+  border: none;
+  padding: 0;
 }

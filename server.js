@@ -47,7 +47,7 @@ app.use(async (req, res, next) => {
  */
 app.get('/api/reports', async (req, res) => {
     try {
-        const { date, startDate, endDate, search, filerName, industry, limit = 100, offset = 0 } = req.query;
+        const { date, startDate, endDate, search, filerName, industry, type, limit = 500, offset = 0 } = req.query;
         const reports = await database.getReports({
             date,
             startDate,
@@ -55,6 +55,7 @@ app.get('/api/reports', async (req, res) => {
             search,
             filerName,
             industry,
+            reportType: type,
             limit: parseInt(limit),
             offset: parseInt(offset)
         });

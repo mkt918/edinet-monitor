@@ -73,6 +73,7 @@ async function fetchReports(options = {}) {
     if (options.endDate) params.append('endDate', options.endDate);
     if (options.search) params.append('search', options.search);
     if (options.industry) params.append('industry', options.industry);
+    if (options.type) params.append('type', options.type);
 
     // ページネーション
     if (options.limit) params.append('limit', options.limit);
@@ -313,20 +314,6 @@ function filterReports() {
             }
         }
 
-        // 種別フィルター
-        if (state.filters.type) {
-            if (!report.report_type?.includes(state.filters.type)) {
-                return false;
-            }
-        }
-
-        // 監視対象のみフィルター
-        if (state.filters.watchedOnly) {
-            if (!isInWatchlist(report.filer_name)) {
-                return false;
-            }
-        }
-
         // 定款変更のみフィルター
         if (state.filters.articlesOnly) {
             const hasTeikanInType = report.report_type?.includes('定款');
@@ -486,6 +473,7 @@ window.toggleShareholders = function (btn) {
 
 function getTypeClass(type) {
     if (!type) return '';
+    if (type.includes('大量保有')) return 'large-shareholding';
     if (type.includes('変更')) return 'change';
     if (type.includes('訂正')) return 'correction';
     if (type.includes('定款')) return 'articles';
@@ -564,6 +552,7 @@ async function loadReports() {
         endDate: state.filters.dateEnd,
         search: state.filters.search,
         industry: state.filters.industry,
+        type: state.filters.type,
         limit: limit,
         offset: 0
     });
@@ -824,7 +813,13 @@ function setupEventListeners() {
             e.stopPropagation();
             const name = watchBtn.dataset.name || watchBtn.dataset.issuer;
             if (name) {
-                await addWatchlistItem(name);
+                const isCurrentlyWatched = isInWatchlist(name);
+                if (isCurrentlyWatched) {
+                    const item = state.watchlist.find(w => name.includes(w.name));
+                    if (item) await removeWatchlistItem(item.id);
+                } else {
+                    await addWatchlistItem(name);
+                }
                 await loadWatchlist();
                 renderReports();
             }
@@ -986,6 +981,26 @@ async function openDashboardV2(edinetCode, issuerName, secCode, type = 'issuer')
 
     // APIからデータ取得
     elements.dashboardDocsList.innerHTML = '<div class="loading">読み込み中...</div>';
+
+    // 大株主情報を表示
+    const dashboardMeta = elements.dashboardModal.querySelector('.dashboard-meta-section') || document.createElement('div');
+    if (!dashboardMeta.className) {
+        dashboardMeta.className = 'dashboard-meta-section';
+        elements.dashboardDocsList.parentNode.insertBefore(dashboardMeta, elements.dashboardDocsList);
+    }
+    dashboardMeta.innerHTML = '<div class="loading-xs">大株主情報を取得中...</div>';
+
+    const attrResult = await fetchIssuerAttributes(edinetCode);
+    if (attrResult && attrResult.success) {
+        dashboardMeta.innerHTML = `
+            <div class="dashboard-shareholders">
+                <h3 class="dashboard-section-title">主要な株主</h3>
+                ${renderAttributesContent(attrResult)}
+            </div>
+        `;
+    } else {
+        dashboardMeta.innerHTML = '';
+    }
 
     let docs = [];
     if (type === 'issuer') {

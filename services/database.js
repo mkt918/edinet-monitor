@@ -227,7 +227,7 @@ class DatabaseService {
      * @param {Object} options - 検索オプション
      * @returns {Array} 報告書一覧
      */
-    async getReports({ date, startDate, endDate, search, filerName, industry, limit = 100, offset = 0 } = {}) {
+    async getReports({ date, startDate, endDate, search, filerName, industry, reportType, limit = 100, offset = 0 } = {}) {
         try {
             let query = this.supabase
                 .from('reports')
